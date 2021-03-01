@@ -4,11 +4,11 @@ package routes
 
 import (
 	"database/sql"
-	"products-api/models"
-
 	"encoding/json"
 	"net/http"
 	"strconv"
+
+	"fanda-api/models"
 
 	"github.com/gorilla/mux"
 )

@@ -43,12 +43,6 @@ func (p *Product) Read(db *sql.DB) error {
 
 // Create method
 func (p *Product) Create(db *sql.DB) error {
-	// "INSERT INTO products(name, price) VALUES($1, $2) RETURNING id",
-
-	// err := db.QueryRow(
-	// 	"INSERT INTO products(name, price) VALUES($1, $2);SELECT last_insert_rowid()",
-	// 	p.Name, p.Price).Scan(&p.ID)
-
 	_, err := db.Exec("INSERT INTO products(name, price) VALUES($1, $2)", p.Name, p.Price) //.Scan(&p.ID)
 	err = db.QueryRow("SELECT last_insert_rowid()").Scan(&p.ID)
 
