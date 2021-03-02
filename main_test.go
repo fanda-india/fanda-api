@@ -3,7 +3,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"testing"
 
@@ -17,27 +16,27 @@ import (
 var a App
 
 func TestMain(m *testing.M) {
-	a.Initialize(
-		os.Getenv("APP_DB_USERNAME"),
-		os.Getenv("APP_DB_PASSWORD"),
-		os.Getenv("APP_DB_NAME"))
+	a.Initialize()
+	// os.Getenv("APP_DB_USERNAME"),
+	// os.Getenv("APP_DB_PASSWORD"),
+	// os.Getenv("APP_DB_NAME")
 
-	ensureTableExists()
+	// ensureTableExists()
 	code := m.Run()
-	clearTable()
+	// clearTable()
 	os.Exit(code)
 }
 
-func ensureTableExists() {
-	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
-		log.Fatal(err)
-	}
-}
+// func ensureTableExists() {
+// 	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
 
-func clearTable() {
-	a.DB.Exec("DELETE FROM products")
-	// a.DB.Exec("ALTER SEQUENCE products_id_seq RESTART WITH 1")
-}
+// func clearTable() {
+// 	a.DB.Exec("DELETE FROM products")
+// 	// a.DB.Exec("ALTER SEQUENCE products_id_seq RESTART WITH 1")
+// }
 
 const tableCreationQuery = `CREATE TABLE IF NOT EXISTS products
 (
@@ -48,7 +47,7 @@ const tableCreationQuery = `CREATE TABLE IF NOT EXISTS products
 )`
 
 func TestEmptyTable(t *testing.T) {
-	clearTable()
+	// clearTable()
 
 	req, _ := http.NewRequest("GET", "/api/products", nil)
 	response := executeRequest(req)
@@ -74,7 +73,7 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 }
 
 func TestGetNonExistentProduct(t *testing.T) {
-	clearTable()
+	// clearTable()
 
 	req, _ := http.NewRequest("GET", "/api/products/11", nil)
 	response := executeRequest(req)
@@ -90,7 +89,7 @@ func TestGetNonExistentProduct(t *testing.T) {
 
 func TestCreateProduct(t *testing.T) {
 
-	clearTable()
+	// clearTable()
 
 	var jsonStr = []byte(`{"name":"test product", "price": 11.22}`)
 	req, _ := http.NewRequest("POST", "/api/products", bytes.NewBuffer(jsonStr))
@@ -118,7 +117,7 @@ func TestCreateProduct(t *testing.T) {
 }
 
 func TestGetProduct(t *testing.T) {
-	clearTable()
+	// clearTable()
 	addProducts(1)
 
 	req, _ := http.NewRequest("GET", "/api/products/1", nil)
@@ -141,7 +140,7 @@ func addProducts(count int) {
 
 func TestUpdateProduct(t *testing.T) {
 
-	clearTable()
+	// clearTable()
 	addProducts(1)
 
 	req, _ := http.NewRequest("GET", "/api/products/1", nil)
@@ -174,7 +173,7 @@ func TestUpdateProduct(t *testing.T) {
 }
 
 func TestDeleteProduct(t *testing.T) {
-	clearTable()
+	// clearTable()
 	addProducts(1)
 
 	req, _ := http.NewRequest("GET", "/api/products/1", nil)
