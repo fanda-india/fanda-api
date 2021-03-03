@@ -61,6 +61,9 @@ func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
