@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"fanda-api/controllers/scopes"
 	"fanda-api/models"
 
 	"github.com/gorilla/mux"
+	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 )
 
@@ -27,11 +29,14 @@ type apiUser struct {
 // UserController type
 type UserController struct {
 	db *gorm.DB
+	// cache *map[string]interface{}
+	cache *cache.Cache
 }
 
 // NewUserController method
 func NewUserController() *UserController {
-	return &UserController{}
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	return &UserController{cache: c}
 }
 
 // Initialize method
@@ -45,13 +50,24 @@ func (c *UserController) Initialize(router *mux.Router, db *gorm.DB) {
 }
 
 func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
+<<<<<<< Updated upstream
 	var apiusers []apiUser
+=======
+	var users []apiUser
+
+	result, found := c.cache.Get(r.RequestURI)
+	if found {
+		respondWithJSON(w, http.StatusOK, result)
+		return
+	}
+>>>>>>> Stashed changes
 	if err := c.db.Model(&models.User{}).
 		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
 		Find(&apiusers).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	c.cache.Set(r.RequestURI, users, cache.DefaultExpiration)
 
 	respondWithJSON(w, http.StatusOK, apiusers)
 }

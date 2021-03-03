@@ -17,7 +17,8 @@ func SearchUser(r *http.Request) func(db *gorm.DB) *gorm.DB {
 			return db
 		}
 		search = "%" + search + "%"
-		return db.Where("(user_name LIKE @search OR email LIKE @search OR first_name LIKE @search OR last_name LIKE @search)",
+		return db.Where("(user_name LIKE @search OR email LIKE @search OR "+
+			"mobile_number LIKE @search OR first_name LIKE @search OR last_name LIKE @search)",
 			sql.Named("search", search))
 	}
 }
