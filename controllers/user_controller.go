@@ -26,7 +26,7 @@ type apiUser struct {
 
 // UserController type
 type UserController struct {
-	DBContext *models.DBContext
+	db *gorm.DB
 }
 
 // NewUserController method
@@ -35,8 +35,8 @@ func NewUserController() *UserController {
 }
 
 // Initialize method
-func (c *UserController) Initialize(router *mux.Router, dbc *models.DBContext) {
-	c.DBContext = dbc
+func (c *UserController) Initialize(router *mux.Router, db *gorm.DB) {
+	c.db = db
 	router.HandleFunc("/users", c.list).Methods(http.MethodGet)
 	router.HandleFunc("/users", c.create).Methods(http.MethodPost)
 	router.HandleFunc("/users/{id:[0-9]+}", c.read).Methods(http.MethodGet)
@@ -44,13 +44,9 @@ func (c *UserController) Initialize(router *mux.Router, dbc *models.DBContext) {
 	router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
 }
 
-func (c *UserController) db() *gorm.DB {
-	return c.DBContext.DB
-}
-
 func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 	var users []apiUser
-	if err := c.db().Model(&models.User{}).
+	if err := c.db.Model(&models.User{}).
 		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
 		Find(&users).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -69,7 +65,7 @@ func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user apiUser
-	if err := c.db().Model(&models.User{}).First(&user, id).Error; err != nil {
+	if err := c.db.Model(&models.User{}).First(&user, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
@@ -92,7 +88,7 @@ func (c *UserController) create(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if err := c.db().Create(&user).Error; err != nil {
+	if err := c.db.Create(&user).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -120,7 +116,7 @@ func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var dbUser models.User
-	if err := c.db().First(&dbUser, id).Error; err != nil {
+	if err := c.db.First(&dbUser, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
@@ -132,7 +128,7 @@ func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.ID = 0
-	if err := c.db().Model(&dbUser).Updates(user).Error; err != nil {
+	if err := c.db.Model(&dbUser).Updates(user).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -151,7 +147,7 @@ func (c *UserController) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := c.db().Delete(&models.User{}, id).Error; err != nil {
+	if err := c.db.Delete(&models.User{}, id).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

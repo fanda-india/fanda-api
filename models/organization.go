@@ -5,8 +5,8 @@ import "time"
 // Organization db model
 type Organization struct {
 	ID           uint     `gorm:"primaryKey;autoIncrement;not null"`
-	Code         string   `gorm:"size:16;unique;not null;uniqueIndex"`
-	Name         string   `gorm:"size:50;unique;not null;uniqueIndex"`
+	Code         string   `gorm:"size:16;unique;uniqueIndex"`
+	Name         string   `gorm:"size:50;unique;uniqueIndex"`
 	Description  *string  `gorm:"size:255"`
 	RegdNum      *string  `gorm:"size:25"`
 	PAN          *string  `gorm:"size:25"`
@@ -19,5 +19,5 @@ type Organization struct {
 	ActiveYearID *uint    `gorm:"default:null"`
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
-	Active       bool `gorm:"not null;default:true"`
+	Active       bool `gorm:"default:true"`
 }
