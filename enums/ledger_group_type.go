@@ -1,7 +1,7 @@
 package enums
 
 // LedgerGroupType enum
-type LedgerGroupType byte
+type LedgerGroupType uint8
 
 const (
 	// Asset group type
@@ -19,5 +19,5 @@ const (
 )
 
 func (l LedgerGroupType) String() string {
-	return [...]string{"", "Asset", "Liability", "Revenue", "Income", "Expense"}[l]
+	return [...]string{"Asset", "Liability", "Revenue", "Income", "Expense"}[l]
 }

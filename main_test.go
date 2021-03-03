@@ -10,13 +10,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 )
 
 var a App
 
 func TestMain(m *testing.M) {
-	a.Initialize()
+	// a.Initialize()
 	// os.Getenv("APP_DB_USERNAME"),
 	// os.Getenv("APP_DB_PASSWORD"),
 	// os.Getenv("APP_DB_NAME")
@@ -134,7 +133,7 @@ func addProducts(count int) {
 	}
 
 	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO products(name, price) VALUES($1, $2)", "Product "+strconv.Itoa(i), (i+1.0)*10)
+		// a.DB.Exec("INSERT INTO products(name, price) VALUES($1, $2)", "Product "+strconv.Itoa(i), (i+1.0)*10)
 	}
 }
 

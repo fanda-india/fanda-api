@@ -1,4 +1,4 @@
-package controllers
+package scopes
 
 import (
 	"database/sql"

@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -18,47 +19,59 @@ import (
 
 // App type
 type App struct {
-	Router *mux.Router
-	DB     *gorm.DB
-	// productRoute *routes.ProductRoute
+	Router         *mux.Router
+	APIRouter      *mux.Router
+	DBContext      *models.DBContext
+	UserController *controllers.UserController
+}
+
+// NewApp method
+func NewApp() *App {
+	return &App{}
 }
 
 // Initialize method
 func (a *App) Initialize( /*user, password, dbname string*/ ) {
-
 	// connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
 
 	// Connect to database
-	var err error
-	a.DB, err = gorm.Open(sqlite.Open("./fanda-go.db3"), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)}) //sql.Open("postgres", connectionString)
+	db, err := gorm.Open(sqlite.Open("./fanda-go.db3"),
+		&gorm.Config{
+			// NowFunc: func() time.Time {
+			// 	return time.Now().Local()
+			// },
+			Logger: logger.Default.LogMode(logger.Info)}) //sql.Open("postgres", connectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
-	models.Migrate(a.DB)
+
+	// Initialize database
+	a.DBContext = models.NewDBContext()
+	a.DBContext.Initialize(db)
+	a.DBContext.Migrate()
 
 	// Create router
-	r := mux.NewRouter()
-	r.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+	a.Router = mux.NewRouter()
+	a.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
 
-	a.Router = r.PathPrefix("/api").Subrouter()
-	// Init controller database
-	controllers.InitDatabase(a.DB)
-	controllers.InitUser(a.Router)
+	// Init routes
+	a.APIRouter = a.Router.PathPrefix("/api").Subrouter()
+	a.initializeAPIRoutes(a.APIRouter, a.DBContext)
+}
+
+func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
+	a.UserController = controllers.NewUserController()
+	a.UserController.Initialize(r, dbc)
 
 }
 
 // Run method
 func (a *App) Run(addr string) {
-	log.Fatal(http.ListenAndServe(":8010", a.Router))
+	println(fmt.Sprintf("Running server http://%s/", addr))
+	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
-
-// func initRoutes(db *gorm.DB, r *mux.Router) {
-// 	// Product route
-// 	// a.productRoute = &routes.ProductRoute{}
-// 	// a.productRoute.Initialize(a.APIRouter, a.DB)
-// }
 
 // create tables
 // dot, err := dotsql.LoadFromFile("./db-scripts/0000-Initial.sql")

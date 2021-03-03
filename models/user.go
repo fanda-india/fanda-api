@@ -4,15 +4,16 @@ import "time"
 
 // User db model
 type User struct {
-	Base
-	UserName        string
-	Email           string
-	MobileNumber    string
-	FirstName       string
-	LastName        string
-	Password        string
-	IsPasswordReset bool `gorm:"default:false"`
+	ID              uint    `gorm:"primaryKey;autoIncrement;not null"`
+	UserName        string  `gorm:"size:16;unique;not null;uniqueIndex"`
+	Email           string  `gorm:"size:100;unique;not null;uniqueIndex"`
+	MobileNumber    string  `gorm:"size:10;unique;not null;uniqueIndex"`
+	FirstName       *string `gorm:"size:25"`
+	LastName        *string `gorm:"size:25"`
+	Password        string  `gorm:"size:100;not null"`
+	IsPasswordReset bool    `gorm:"not null;default:false"`
 	LoginAt         *time.Time
-	Audit           Audit `gorm:"embedded"`
-	Active          bool  `gorm:"default:1"`
+	CreatedAt       time.Time
+	UpdatedAt       *time.Time
+	Active          bool `gorm:"not null;default:true"`
 }

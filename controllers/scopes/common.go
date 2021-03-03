@@ -1,4 +1,4 @@
-package controllers
+package scopes
 
 import (
 	"net/http"
@@ -26,5 +26,18 @@ func Paginate(r *http.Request) func(db *gorm.DB) *gorm.DB {
 
 		offset := (page - 1) * pageSize
 		return db.Offset(offset).Limit(pageSize)
+	}
+}
+
+// All scope
+func All(r *http.Request) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		query := r.URL.Query()
+		all, _ := strconv.ParseBool(query.Get("all"))
+
+		if !all {
+			return db.Where("active = ?", true)
+		}
+		return db
 	}
 }
