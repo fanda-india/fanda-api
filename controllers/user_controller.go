@@ -6,37 +6,49 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"fanda-api/controllers/scopes"
+	"fanda-api/enums"
 	"fanda-api/models"
 
 	"github.com/gorilla/mux"
-	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 )
 
 type apiUser struct {
-	ID           uint    `json:"id"`
-	UserName     string  `json:"userName"`
-	Email        string  `json:"email"`
-	MobileNumber string  `json:"mobileNumber"`
-	FirstName    *string `json:"firstName"`
-	LastName     *string `json:"lastName"`
-	Active       bool    `json:"active"`
+	ID           enums.ID `json:"id"`
+	UserName     string   `json:"userName"`
+	Email        string   `json:"email"`
+	MobileNumber string   `json:"mobileNumber"`
+	FirstName    *string  `json:"firstName"`
+	LastName     *string  `json:"lastName"`
+	Active       bool     `json:"active"`
 }
 
 // UserController type
 type UserController struct {
 	db *gorm.DB
 	// cache *map[string]interface{}
-	cache *cache.Cache
+	// cache *cache.Cache
 }
 
 // NewUserController method
 func NewUserController() *UserController {
-	c := cache.New(5*time.Minute, 10*time.Minute)
-	return &UserController{cache: c}
+	//c := cache.New(2*time.Minute, 5*time.Minute)
+	return &UserController{}
+}
+
+func (c *UserController) getCount(r *http.Request) int64 {
+	var count int64
+	c.db.Model(&models.User{}).
+		Scopes(scopes.All(r), scopes.SearchUser(r)).
+		Count(&count)
+	return count
+}
+
+func (c *UserController) checkExists(r *http.Request) enums.ID {
+	return 0
+
 }
 
 // Initialize method
@@ -47,25 +59,30 @@ func (c *UserController) Initialize(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/users/{id:[0-9]+}", c.read).Methods(http.MethodGet)
 	router.HandleFunc("/users/{id:[0-9]+}", c.update).Methods(http.MethodPatch)
 	router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
+	router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
+	router.HandleFunc("/users/count", c.count).Methods(http.MethodGet)
+	router.HandleFunc("/users/exists", c.exists).Methods(http.MethodGet)
 }
 
 func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 	var apiusers []apiUser
 
-	result, found := c.cache.Get(r.RequestURI)
-	if found {
-		respondWithJSON(w, http.StatusOK, result)
-		return
-	}
+	// result, found := c.cache.Get(r.RequestURI)
+	// if found {
+	// 	respondWithJSON(w, http.StatusOK, result)
+	// 	return
+	// }
 	if err := c.db.Model(&models.User{}).
 		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
 		Find(&apiusers).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.cache.Set(r.RequestURI, apiusers, cache.DefaultExpiration)
 
-	respondWithJSON(w, http.StatusOK, apiusers)
+	// c.cache.Set(r.RequestURI, apiusers, cache.DefaultExpiration)
+
+	payload := map[string]interface{}{"data": apiusers, "count": c.getCount(r)}
+	respondWithJSON(w, http.StatusOK, payload)
 }
 
 func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +163,7 @@ func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiuser := apiUser{ID: uint(id), UserName: user.UserName, Email: user.Email,
+	apiuser := apiUser{ID: enums.ID(id), UserName: user.UserName, Email: user.Email,
 		MobileNumber: user.MobileNumber, FirstName: user.FirstName, LastName: user.LastName,
 		Active: user.Active}
 	respondWithJSON(w, http.StatusOK, apiuser)
@@ -177,4 +194,11 @@ func (c *UserController) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
+}
+
+func (c *UserController) count(w http.ResponseWriter, r *http.Request) {
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{"count": c.getCount(r)})
+}
+
+func (c *UserController) exists(w http.ResponseWriter, r *http.Request) {
 }
