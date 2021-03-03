@@ -40,20 +40,20 @@ func (c *UserController) Initialize(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/users", c.list).Methods(http.MethodGet)
 	router.HandleFunc("/users", c.create).Methods(http.MethodPost)
 	router.HandleFunc("/users/{id:[0-9]+}", c.read).Methods(http.MethodGet)
-	router.HandleFunc("/users/{id:[0-9]+}", c.update).Methods(http.MethodPut)
+	router.HandleFunc("/users/{id:[0-9]+}", c.update).Methods(http.MethodPatch)
 	router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
 }
 
 func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
-	var users []apiUser
+	var apiusers []apiUser
 	if err := c.db.Model(&models.User{}).
 		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
-		Find(&users).Error; err != nil {
+		Find(&apiusers).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, users)
+	respondWithJSON(w, http.StatusOK, apiusers)
 }
 
 func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
@@ -64,8 +64,8 @@ func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user apiUser
-	if err := c.db.Model(&models.User{}).First(&user, id).Error; err != nil {
+	var apiuser apiUser
+	if err := c.db.Model(&models.User{}).First(&apiuser, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
@@ -76,7 +76,7 @@ func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, user)
+	respondWithJSON(w, http.StatusOK, apiuser)
 }
 
 func (c *UserController) create(w http.ResponseWriter, r *http.Request) {
@@ -93,10 +93,10 @@ func (c *UserController) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := apiUser{ID: user.ID, UserName: user.UserName, Email: user.Email, MobileNumber: user.MobileNumber,
+	apiuser := apiUser{ID: user.ID, UserName: user.UserName, Email: user.Email, MobileNumber: user.MobileNumber,
 		FirstName: user.FirstName, LastName: user.LastName, Active: user.Active}
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, user.ID))
-	respondWithJSON(w, http.StatusCreated, u)
+	respondWithJSON(w, http.StatusCreated, apiuser)
 }
 
 func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +107,7 @@ func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user apiUser //models.User
+	var user models.User
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&user); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid resquest payload")
@@ -115,35 +115,47 @@ func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	var dbUser models.User
-	if err := c.db.First(&dbUser, id).Error; err != nil {
-		switch err {
-		case sql.ErrNoRows:
-		case gorm.ErrRecordNotFound:
-			respondWithError(w, http.StatusNotFound, "User not found")
-		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
-		}
+	// check record exists
+	var exists bool
+	if err := c.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if !exists {
+		respondWithError(w, http.StatusNotFound, "User not found")
 		return
 	}
 
 	user.ID = 0
-	if err := c.db.Model(&dbUser).Updates(user).Error; err != nil {
+	if err := c.db.Model(&models.User{}).
+		Where("id = ?", id).
+		Updates(user).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	user.ID = uint(id)
 
-	// u := apiUser{ID: uint(id), UserName: user.UserName, Email: user.Email, MobileNumber: user.MobileNumber,
-	// 	FirstName: user.FirstName, LastName: user.LastName, Active: user.Active}
-	respondWithJSON(w, http.StatusOK, user)
+	apiuser := apiUser{ID: uint(id), UserName: user.UserName, Email: user.Email,
+		MobileNumber: user.MobileNumber, FirstName: user.FirstName, LastName: user.LastName,
+		Active: user.Active}
+	respondWithJSON(w, http.StatusOK, apiuser)
 }
 
 func (c *UserController) delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid Product ID")
+		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	// check record exists
+	var exists bool
+	if err := c.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if !exists {
+		respondWithError(w, http.StatusNotFound, "User not found")
 		return
 	}
 
