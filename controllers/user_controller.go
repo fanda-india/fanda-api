@@ -60,6 +60,9 @@ func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusOK, result)
 		return
 	}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 	if err := c.db.Model(&models.User{}).
 		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
