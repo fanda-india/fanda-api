@@ -57,7 +57,6 @@ func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusOK, result)
 		return
 	}
-
 	if err := c.db.Model(&models.User{}).
 		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
 		Find(&apiusers).Error; err != nil {
