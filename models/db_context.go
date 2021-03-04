@@ -8,14 +8,14 @@ type DBContext struct {
 }
 
 // NewDBContext method
-func NewDBContext() *DBContext {
-	return &DBContext{}
+func NewDBContext(db *gorm.DB) *DBContext {
+	return &DBContext{DB: db}
 }
 
 // Initialize method
-func (dbc *DBContext) Initialize(db *gorm.DB) {
-	dbc.DB = db
-}
+// func (dbc *DBContext) Initialize(db *gorm.DB) {
+// 	dbc.DB = db
+// }
 
 // Migrate method
 func (dbc *DBContext) Migrate() {

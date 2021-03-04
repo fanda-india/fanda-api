@@ -10,19 +10,20 @@ import (
 	"fanda-api/controllers/scopes"
 	"fanda-api/enums"
 	"fanda-api/models"
+	"fanda-api/options"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
 type apiUser struct {
-	ID           enums.ID `json:"id"`
-	UserName     string   `json:"userName"`
-	Email        string   `json:"email"`
-	MobileNumber string   `json:"mobileNumber"`
-	FirstName    *string  `json:"firstName"`
-	LastName     *string  `json:"lastName"`
-	Active       bool     `json:"active"`
+	ID           models.ID `json:"id"`
+	UserName     string    `json:"userName"`
+	Email        string    `json:"email"`
+	MobileNumber string    `json:"mobileNumber"`
+	FirstName    *string   `json:"firstName"`
+	LastName     *string   `json:"lastName"`
+	Active       bool      `json:"active"`
 }
 
 // UserController type
@@ -38,19 +39,6 @@ func NewUserController() *UserController {
 	return &UserController{}
 }
 
-func (c *UserController) getCount(r *http.Request) int64 {
-	var count int64
-	c.db.Model(&models.User{}).
-		Scopes(scopes.All(r), scopes.SearchUser(r)).
-		Count(&count)
-	return count
-}
-
-func (c *UserController) checkExists(r *http.Request) enums.ID {
-	return 0
-
-}
-
 // Initialize method
 func (c *UserController) Initialize(router *mux.Router, db *gorm.DB) {
 	c.db = db
@@ -64,6 +52,8 @@ func (c *UserController) Initialize(router *mux.Router, db *gorm.DB) {
 	router.HandleFunc("/users/exists", c.exists).Methods(http.MethodGet)
 }
 
+/****************** ROUTE METHODS ********************/
+
 func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 	var apiusers []apiUser
 
@@ -72,16 +62,16 @@ func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 	// 	respondWithJSON(w, http.StatusOK, result)
 	// 	return
 	// }
+	o := requestToListOptions(r)
 	if err := c.db.Model(&models.User{}).
-		Scopes(scopes.Paginate(r), scopes.All(r), scopes.SearchUser(r)).
+		Scopes(scopes.Paginate(o), scopes.All(o), scopes.SearchUser(o)).
 		Find(&apiusers).Error; err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
 	// c.cache.Set(r.RequestURI, apiusers, cache.DefaultExpiration)
 
-	payload := map[string]interface{}{"data": apiusers, "count": c.getCount(r)}
+	payload := map[string]interface{}{"data": apiusers, "count": c.getCount(o)}
 	respondWithJSON(w, http.StatusOK, payload)
 }
 
@@ -163,7 +153,7 @@ func (c *UserController) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiuser := apiUser{ID: enums.ID(id), UserName: user.UserName, Email: user.Email,
+	apiuser := apiUser{ID: models.ID(id), UserName: user.UserName, Email: user.Email,
 		MobileNumber: user.MobileNumber, FirstName: user.FirstName, LastName: user.LastName,
 		Active: user.Active}
 	respondWithJSON(w, http.StatusOK, apiuser)
@@ -197,8 +187,42 @@ func (c *UserController) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) count(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{"count": c.getCount(r)})
+	o := requestToListOptions(r)
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{"count": c.getCount(o)})
 }
 
 func (c *UserController) exists(w http.ResponseWriter, r *http.Request) {
+	o := requestToExistOptions(r)
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{"id": c.checkExists(o)})
+}
+
+/****************** LOCAL METHODS ********************/
+
+func (c *UserController) getCount(o options.ListOptions) int64 {
+	var count int64
+	c.db.Model(&models.User{}).
+		Scopes(scopes.All(o), scopes.SearchUser(o)).
+		Count(&count)
+	return count
+}
+
+func (c *UserController) checkExists(o options.ExistOptions) models.ID {
+	// condition := make(map[string]interface{})
+	condition := models.User{}
+
+	switch o.Field {
+	case enums.Name:
+		//condition["user_name"] = o.Value
+		condition.UserName = o.Value
+	case enums.Email:
+		//condition["email"] = o.Value
+		condition.Email = o.Value
+	case enums.Mobile:
+		// condition["mobile_number"] = o.Value
+		condition.MobileNumber = o.Value
+	}
+
+	var id models.ID
+	c.db.Model(&models.User{}).Select("id").Where(&condition).Scan(&id)
+	return id
 }

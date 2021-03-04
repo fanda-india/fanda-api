@@ -2,23 +2,21 @@ package scopes
 
 import (
 	"database/sql"
-	"net/http"
+	"fanda-api/options"
 
 	"gorm.io/gorm"
 )
 
 // SearchUser scope
-func SearchUser(r *http.Request) func(db *gorm.DB) *gorm.DB {
+func SearchUser(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		query := r.URL.Query()
-		search := query.Get("search")
 
-		if search == "" {
+		if o.Search == "" {
 			return db
 		}
-		search = "%" + search + "%"
+		o.Search = "%" + o.Search + "%"
 		return db.Where("(user_name LIKE @search OR email LIKE @search OR "+
 			"mobile_number LIKE @search OR first_name LIKE @search OR last_name LIKE @search)",
-			sql.Named("search", search))
+			sql.Named("search", o.Search))
 	}
 }

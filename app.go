@@ -46,8 +46,7 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 	}
 
 	// Initialize database
-	a.DBContext = models.NewDBContext()
-	a.DBContext.Initialize(db)
+	a.DBContext = models.NewDBContext(db)
 	a.DBContext.Migrate()
 
 	// Create router

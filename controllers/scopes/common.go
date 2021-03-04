@@ -1,41 +1,35 @@
 package scopes
 
 import (
-	"net/http"
-	"strconv"
+	"fanda-api/options"
 
 	"gorm.io/gorm"
 )
 
 // Paginate scope
-func Paginate(r *http.Request) func(db *gorm.DB) *gorm.DB {
+func Paginate(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		query := r.URL.Query()
-		page, _ := strconv.Atoi(query.Get("page"))
-		if page == 0 {
-			page = 1
+		if o.Page == 0 {
+			o.Page = 1
 		}
 
-		pageSize, _ := strconv.Atoi(query.Get("size"))
 		switch {
-		case pageSize > 100:
-			pageSize = 100
-		case pageSize <= 0:
-			pageSize = 10
+		case o.Size > 100:
+			o.Size = 100
+		case o.Size <= 0:
+			o.Size = 10
 		}
 
-		offset := (page - 1) * pageSize
-		return db.Offset(offset).Limit(pageSize)
+		offset := (o.Page - 1) * o.Size
+		return db.Offset(offset).Limit(o.Size)
 	}
 }
 
 // All scope
-func All(r *http.Request) func(db *gorm.DB) *gorm.DB {
+func All(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		query := r.URL.Query()
-		all, _ := strconv.ParseBool(query.Get("all"))
 
-		if !all {
+		if !o.All {
 			return db.Where("active = ?", true)
 		}
 		return db
