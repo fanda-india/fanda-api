@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"fanda-api/services"
 
@@ -20,14 +22,14 @@ func NewUserController(s *services.UserService) *UserController {
 
 // Initialize method
 func (c *UserController) Initialize(router *mux.Router) {
-	router.HandleFunc("/users", c.list).Methods(http.MethodGet)
-	// router.HandleFunc("/users", c.create).Methods(http.MethodPost)
-	// router.HandleFunc("/users/{id:[0-9]+}", c.read).Methods(http.MethodGet)
-	// router.HandleFunc("/users/{id:[0-9]+}", c.update).Methods(http.MethodPatch)
-	// router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
-	// router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
-	// router.HandleFunc("/users/count", c.count).Methods(http.MethodGet)
-	// router.HandleFunc("/users/exists", c.exists).Methods(http.MethodGet)
+	router.HandleFunc("/users/", c.list).Methods(http.MethodGet)
+	// router.HandleFunc("/users/", c.create).Methods(http.MethodPost)
+	router.HandleFunc("/users/{id:[0-9]+}/", c.read).Methods(http.MethodGet)
+	// router.HandleFunc("/users/{id:[0-9]+}/", c.update).Methods(http.MethodPatch)
+	// router.HandleFunc("/users/{id:[0-9]+}/", c.delete).Methods(http.MethodDelete)
+	// router.HandleFunc("/users/{id:[0-9]+}/", c.delete).Methods(http.MethodDelete)
+	// router.HandleFunc("/users/count/", c.count).Methods(http.MethodGet)
+	// router.HandleFunc("/users/exists/", c.exists).Methods(http.MethodGet)
 }
 
 /****************** ROUTE METHODS ********************/
@@ -42,28 +44,27 @@ func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
-// 	vars := mux.Vars(r)
-// 	id, err := strconv.ParseUint(vars["id"], 10, 32)
-// 	if err != nil {
-// 		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
-// 		return
-// 	}
+func (c *UserController) read(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
 
-// 	var apiuser apiUser
-// 	if err := c.db.Model(&models.User{}).First(&apiuser, id).Error; err != nil {
-// 		switch err {
-// 		case sql.ErrNoRows:
-// 		case gorm.ErrRecordNotFound:
-// 			respondWithError(w, http.StatusNotFound, "User not found")
-// 		default:
-// 			respondWithError(w, http.StatusInternalServerError, err.Error())
-// 		}
-// 		return
-// 	}
-
-// 	respondWithJSON(w, http.StatusOK, apiuser)
-// }
+	// var apiuser apiUser
+	user, err := c.service.Read(uint(id))
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), "not found"):
+			respondWithError(w, http.StatusNotFound, "User not found")
+		default:
+			respondWithError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, user)
+}
 
 // func (c *UserController) create(w http.ResponseWriter, r *http.Request) {
 // 	var user models.User

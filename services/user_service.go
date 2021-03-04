@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"fanda-api/controllers/scopes"
 	"fanda-api/dtos"
@@ -31,11 +32,51 @@ func (s *UserService) List(o options.ListOptions) (*options.ListResult, error) {
 		Find(&users).Error; err != nil {
 		return nil, err
 	}
-	if count, err := s.GetCount(o); err != nil {
+	count, err := s.GetCount(o)
+	if err != nil {
 		return nil, err
-	} else {
-		return &options.ListResult{Data: &users, Count: count}, nil
 	}
+	return &options.ListResult{Data: &users, Count: count}, nil
+
+}
+
+// Read method
+func (s *UserService) Read(id models.ID) (*dtos.UserDto, error) {
+	var user dtos.UserDto
+
+	if err := s.db.Model(&models.User{}).First(&user, id).Error; err != nil {
+		switch err {
+		case sql.ErrNoRows:
+		case gorm.ErrRecordNotFound:
+			return nil, errors.New("User not found")
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
+}
+
+// Create method
+func (s *UserService) Create(userDto dtos.UserDto) (*dtos.UserDto, error) {
+	// var user models.User
+	// decoder := json.NewDecoder(r.Body)
+	// if err := decoder.Decode(&user); err != nil {
+	// 	respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+	// 	return
+	// }
+	// defer r.Body.Close()
+
+	var user = userDto.ToUser()
+	if err := s.db.Create(&user).Error; err != nil {
+		// respondWithError(w, http.StatusInternalServerError, err.Error())
+		return nil, err
+	}
+
+	// apiuser := apiUser{ID: user.ID, UserName: user.UserName, Email: user.Email, MobileNumber: user.MobileNumber,
+	// 	FirstName: user.FirstName, LastName: user.LastName, Active: user.Active}
+	// w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, user.ID))
+	// respondWithJSON(w, http.StatusCreated, apiuser)
+	return userDto.FromUser(user), nil
 }
 
 // GetCount method

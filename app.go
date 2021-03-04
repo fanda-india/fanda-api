@@ -46,13 +46,14 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 		log.Fatal(err)
 	}
 
-	// Initialize database
+	// Migrate database
 	a.DBContext = models.NewDBContext(db)
 	a.DBContext.Migrate()
 
 	// Create router
 	a.Router = mux.NewRouter()
-	a.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+	a.Router.StrictSlash(true)
+	a.Router.HandleFunc("/api/health/", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
 
