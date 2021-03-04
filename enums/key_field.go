@@ -1,8 +1,6 @@
 package enums
 
-import (
-	"strings"
-)
+import "fanda-api/utils"
 
 // KeyField enum
 type KeyField uint8
@@ -29,14 +27,5 @@ func (k KeyField) String() string {
 
 // KeyFieldConst method
 func KeyFieldConst(s string) KeyField {
-	return KeyField(find(keyFields, s))
-}
-
-func find(a []string, x string) int {
-	for i, n := range a {
-		if strings.EqualFold(x, n) {
-			return i
-		}
-	}
-	return len(a)
+	return KeyField(utils.Search(keyFields, s))
 }

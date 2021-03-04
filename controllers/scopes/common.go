@@ -9,18 +9,25 @@ import (
 // Paginate scope
 func Paginate(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if o.Page == 0 {
-			o.Page = 1
-		}
 
 		switch {
 		case o.Size > 100:
 			o.Size = 100
-		case o.Size <= 0:
+		case o.Size <= 0 && o.Page > 0:
 			o.Size = 10
+		case o.Size <= 0:
+			o.Size = 0
+		}
+		if o.Page == 0 {
+			o.Page = 1
 		}
 
 		offset := (o.Page - 1) * o.Size
+
+		// skip pagination
+		if offset == 0 && o.Size == 0 {
+			return db
+		}
 		return db.Offset(offset).Limit(o.Size)
 	}
 }

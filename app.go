@@ -10,6 +10,7 @@ import (
 
 	"fanda-api/controllers"
 	"fanda-api/models"
+	"fanda-api/services"
 
 	"github.com/gorilla/mux"
 	"gorm.io/driver/sqlite"
@@ -61,9 +62,8 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 }
 
 func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
-	a.UserController = controllers.NewUserController()
-	a.UserController.Initialize(r, dbc.DB)
-
+	a.UserController = controllers.NewUserController(services.NewUserService(dbc.DB))
+	a.UserController.Initialize(r)
 }
 
 // Run method
