@@ -24,15 +24,15 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 // List method
-func (s *UserRepository) List(o options.ListOptions) (*options.ListResult, error) {
+func (repo *UserRepository) List(opts options.ListOptions) (*options.ListResult, error) {
 	var users []dtos.UserDto
 
-	if err := s.db.Model(&models.User{}).
-		Scopes(scopes.Paginate(o), scopes.All(o), scopes.SearchUser(o)).
+	if err := repo.db.Model(&models.User{}).
+		Scopes(scopes.Paginate(opts), scopes.All(opts), scopes.SearchUser(opts)).
 		Find(&users).Error; err != nil {
 		return nil, err
 	}
-	count, err := s.GetCount(o)
+	count, err := repo.GetCount(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -41,10 +41,10 @@ func (s *UserRepository) List(o options.ListOptions) (*options.ListResult, error
 }
 
 // Read method
-func (s *UserRepository) Read(id models.ID) (*dtos.UserDto, error) {
+func (repo *UserRepository) Read(id models.ID) (*dtos.UserDto, error) {
 	var user dtos.UserDto
 
-	if err := s.db.Model(&models.User{}).First(&user, id).Error; err != nil {
+	if err := repo.db.Model(&models.User{}).First(&user, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
@@ -57,28 +57,28 @@ func (s *UserRepository) Read(id models.ID) (*dtos.UserDto, error) {
 }
 
 // Create method
-func (s *UserRepository) Create(userDto *dtos.UserDto) (*dtos.UserDto, error) {
+func (repo *UserRepository) Create(userDto *dtos.UserDto) (*dtos.UserDto, error) {
 	var user = userDto.ToUser()
 
 	// validate
-	var vo = options.ValidateOptions{ID: user.ID, Name: user.UserName, Email: user.Email, Mobile: user.MobileNumber}
-	_, err := s.Validate(vo)
+	var opts = options.ValidateOptions{ID: user.ID, Name: user.UserName, Email: user.Email, Mobile: user.MobileNumber}
+	_, err := repo.Validate(opts)
 	if err != nil {
 		return nil, err
 	}
 
 	// create
-	if err := s.db.Create(&user).Error; err != nil {
+	if err := repo.db.Create(&user).Error; err != nil {
 		return nil, err
 	}
 	return userDto.FromUser(user), nil
 }
 
 // Update method
-func (s *UserRepository) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto, error) {
+func (repo *UserRepository) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto, error) {
 	// check record exists
 	var exists bool
-	if err := s.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+	if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
 		return nil, err
 	}
 	if !exists {
@@ -88,15 +88,15 @@ func (s *UserRepository) Update(id models.ID, userDto *dtos.UserDto) (*dtos.User
 	var user = userDto.ToUser()
 
 	// validate
-	var vo = options.ValidateOptions{ID: user.ID, Name: user.UserName, Email: user.Email, Mobile: user.MobileNumber}
-	_, err := s.Validate(vo)
+	var opts = options.ValidateOptions{ID: user.ID, Name: user.UserName, Email: user.Email, Mobile: user.MobileNumber}
+	_, err := repo.Validate(opts)
 	if err != nil {
 		return nil, err
 	}
 
 	// update
 	user.ID = 0
-	if err := s.db.Model(&models.User{}).
+	if err := repo.db.Model(&models.User{}).
 		Where("id = ?", id).
 		Updates(user).Error; err != nil {
 		return nil, err
@@ -106,27 +106,27 @@ func (s *UserRepository) Update(id models.ID, userDto *dtos.UserDto) (*dtos.User
 }
 
 // Delete method
-func (s *UserRepository) Delete(id models.ID) (bool, error) {
+func (repo *UserRepository) Delete(id models.ID) (bool, error) {
 	// check record exists
 	var exists bool
-	if err := s.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+	if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
 		return false, err
 	}
 	if !exists {
 		return false, options.NewNotFoundError("User")
 	}
 
-	if err := s.db.Delete(&models.User{}, id).Error; err != nil {
+	if err := repo.db.Delete(&models.User{}, id).Error; err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
 // GetCount method
-func (s *UserRepository) GetCount(o options.ListOptions) (int64, error) {
+func (repo *UserRepository) GetCount(opts options.ListOptions) (int64, error) {
 	var count int64
-	if err := s.db.Model(&models.User{}).
-		Scopes(scopes.All(o), scopes.SearchUser(o)).
+	if err := repo.db.Model(&models.User{}).
+		Scopes(scopes.All(opts), scopes.SearchUser(opts)).
 		Count(&count).Error; err != nil {
 		return -1, err
 	}
@@ -134,60 +134,60 @@ func (s *UserRepository) GetCount(o options.ListOptions) (int64, error) {
 }
 
 // CheckExists method
-func (s *UserRepository) CheckExists(option options.ExistOptions) (models.ID, error) {
+func (repo *UserRepository) CheckExists(opts options.ExistOptions) (models.ID, error) {
 	condition := models.User{}
 
-	switch option.Field {
+	switch opts.Field {
 	case enums.Name:
-		condition.UserName = option.Value
+		condition.UserName = opts.Value
 	case enums.Email:
-		condition.Email = option.Value
+		condition.Email = opts.Value
 	case enums.Mobile:
-		condition.MobileNumber = option.Value
+		condition.MobileNumber = opts.Value
 	default:
-		return 0, fmt.Errorf("CheckExists - Unknown field: %d", option.Field)
+		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
 	}
 
 	var id models.ID
-	if err := s.db.Model(&models.User{}).Select("id").Where(&condition).Scan(&id).Error; err != nil {
+	if err := repo.db.Model(&models.User{}).Select("id").Where(&condition).Scan(&id).Error; err != nil {
 		return 0, err
 	}
 	return id, nil
 }
 
 // Validate method
-func (s *UserRepository) Validate(option options.ValidateOptions) (bool, error) {
+func (repo *UserRepository) Validate(opts options.ValidateOptions) (bool, error) {
 	// Required validations
-	if option.Name == "" {
+	if opts.Name == "" {
 		return false, errors.New("Username is required")
 	}
-	if option.Email == "" {
+	if opts.Email == "" {
 		return false, errors.New("Email is required")
 	}
-	if option.Mobile == "" {
+	if opts.Mobile == "" {
 		return false, errors.New("Mobile number is required")
 	}
 
 	// Duplicate validations
 	// Username
-	existOption := options.ExistOptions{Field: enums.Name, Value: option.Name}
-	if id, err := s.CheckExists(existOption); err != nil {
+	exOpt := options.ExistOptions{Field: enums.Name, Value: opts.Name}
+	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(option.ID) {
+	} else if id != 0 && id != uint(opts.ID) {
 		return false, errors.New("Username already exists")
 	}
 	// Email
-	existOption = options.ExistOptions{Field: enums.Email, Value: option.Email}
-	if id, err := s.CheckExists(existOption); err != nil {
+	exOpt = options.ExistOptions{Field: enums.Email, Value: opts.Email}
+	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(option.ID) {
+	} else if id != 0 && id != uint(opts.ID) {
 		return false, errors.New("Email already exists")
 	}
 	// Mobile number
-	existOption = options.ExistOptions{Field: enums.Mobile, Value: option.Mobile}
-	if id, err := s.CheckExists(existOption); err != nil {
+	exOpt = options.ExistOptions{Field: enums.Mobile, Value: opts.Mobile}
+	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(option.ID) {
+	} else if id != 0 && id != uint(opts.ID) {
 		return false, errors.New("Mobile number already exists")
 	}
 	return true, nil
