@@ -3,11 +3,11 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"fanda-api/controllers/scopes"
 	"fanda-api/dtos"
 	"fanda-api/enums"
 	"fanda-api/models"
 	"fanda-api/options"
+	"fanda-api/services/scopes"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -48,7 +48,7 @@ func (s *UserService) Read(id models.ID) (*dtos.UserDto, error) {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
-			return nil, errors.New("User not found")
+			return nil, options.NewNotFoundError("User")
 		default:
 			return nil, err
 		}
@@ -57,26 +57,68 @@ func (s *UserService) Read(id models.ID) (*dtos.UserDto, error) {
 }
 
 // Create method
-func (s *UserService) Create(userDto dtos.UserDto) (*dtos.UserDto, error) {
-	// var user models.User
-	// decoder := json.NewDecoder(r.Body)
-	// if err := decoder.Decode(&user); err != nil {
-	// 	respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-	// 	return
-	// }
-	// defer r.Body.Close()
-
+func (s *UserService) Create(userDto *dtos.UserDto) (*dtos.UserDto, error) {
 	var user = userDto.ToUser()
-	if err := s.db.Create(&user).Error; err != nil {
-		// respondWithError(w, http.StatusInternalServerError, err.Error())
+
+	// validate
+	var vo = options.ValidateOptions{ID: user.ID, Name: user.UserName, Email: user.Email, Mobile: user.MobileNumber}
+	_, err := s.Validate(vo)
+	if err != nil {
 		return nil, err
 	}
 
-	// apiuser := apiUser{ID: user.ID, UserName: user.UserName, Email: user.Email, MobileNumber: user.MobileNumber,
-	// 	FirstName: user.FirstName, LastName: user.LastName, Active: user.Active}
-	// w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, user.ID))
-	// respondWithJSON(w, http.StatusCreated, apiuser)
+	// create
+	if err := s.db.Create(&user).Error; err != nil {
+		return nil, err
+	}
 	return userDto.FromUser(user), nil
+}
+
+// Update method
+func (s *UserService) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto, error) {
+	// check record exists
+	var exists bool
+	if err := s.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, options.NewNotFoundError("User")
+	}
+
+	var user = userDto.ToUser()
+
+	// validate
+	var vo = options.ValidateOptions{ID: user.ID, Name: user.UserName, Email: user.Email, Mobile: user.MobileNumber}
+	_, err := s.Validate(vo)
+	if err != nil {
+		return nil, err
+	}
+
+	// update
+	user.ID = 0
+	if err := s.db.Model(&models.User{}).
+		Where("id = ?", id).
+		Updates(user).Error; err != nil {
+		return nil, err
+	}
+	return userDto.FromUser(user), nil
+}
+
+// Delete method
+func (s *UserService) Delete(id models.ID) (bool, error) {
+	// check record exists
+	var exists bool
+	if err := s.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, options.NewNotFoundError("User")
+	}
+
+	if err := s.db.Delete(&models.User{}, id).Error; err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // GetCount method
@@ -106,7 +148,7 @@ func (s *UserService) CheckExists(option options.ExistOptions) (models.ID, error
 		// condition["mobile_number"] = o.Value
 		condition.MobileNumber = option.Value
 	default:
-		return 0, fmt.Errorf("checkExists - Unknown field: %d", option.Field)
+		return 0, fmt.Errorf("CheckExists - Unknown field: %d", option.Field)
 	}
 
 	var id models.ID

@@ -1,12 +1,14 @@
 package options
 
+import "fanda-api/models"
+
 // ValidateOptions type
 type ValidateOptions struct {
-	ID       int
+	ID       models.ID
 	Code     string
 	Name     string
 	Email    string
 	Mobile   string
 	Number   string
-	ParentID int
+	ParentID models.ID
 }
