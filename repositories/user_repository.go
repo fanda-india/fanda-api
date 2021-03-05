@@ -1,4 +1,4 @@
-package services
+package repositories
 
 import (
 	"database/sql"
@@ -7,24 +7,24 @@ import (
 	"fanda-api/enums"
 	"fanda-api/models"
 	"fanda-api/options"
-	"fanda-api/services/scopes"
+	"fanda-api/repositories/scopes"
 	"fmt"
 
 	"gorm.io/gorm"
 )
 
-// UserService service
-type UserService struct {
+// UserRepository service
+type UserRepository struct {
 	db *gorm.DB
 }
 
-// NewUserService method
-func NewUserService(db *gorm.DB) *UserService {
-	return &UserService{db}
+// NewUserRepository method
+func NewUserRepository(db *gorm.DB) *UserRepository {
+	return &UserRepository{db}
 }
 
 // List method
-func (s *UserService) List(o options.ListOptions) (*options.ListResult, error) {
+func (s *UserRepository) List(o options.ListOptions) (*options.ListResult, error) {
 	var users []dtos.UserDto
 
 	if err := s.db.Model(&models.User{}).
@@ -41,7 +41,7 @@ func (s *UserService) List(o options.ListOptions) (*options.ListResult, error) {
 }
 
 // Read method
-func (s *UserService) Read(id models.ID) (*dtos.UserDto, error) {
+func (s *UserRepository) Read(id models.ID) (*dtos.UserDto, error) {
 	var user dtos.UserDto
 
 	if err := s.db.Model(&models.User{}).First(&user, id).Error; err != nil {
@@ -57,7 +57,7 @@ func (s *UserService) Read(id models.ID) (*dtos.UserDto, error) {
 }
 
 // Create method
-func (s *UserService) Create(userDto *dtos.UserDto) (*dtos.UserDto, error) {
+func (s *UserRepository) Create(userDto *dtos.UserDto) (*dtos.UserDto, error) {
 	var user = userDto.ToUser()
 
 	// validate
@@ -75,7 +75,7 @@ func (s *UserService) Create(userDto *dtos.UserDto) (*dtos.UserDto, error) {
 }
 
 // Update method
-func (s *UserService) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto, error) {
+func (s *UserRepository) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto, error) {
 	// check record exists
 	var exists bool
 	if err := s.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
@@ -84,7 +84,7 @@ func (s *UserService) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto
 	if !exists {
 		return nil, options.NewNotFoundError("User")
 	}
-
+	userDto.ID = id
 	var user = userDto.ToUser()
 
 	// validate
@@ -101,11 +101,12 @@ func (s *UserService) Update(id models.ID, userDto *dtos.UserDto) (*dtos.UserDto
 		Updates(user).Error; err != nil {
 		return nil, err
 	}
+	user.ID = id
 	return userDto.FromUser(user), nil
 }
 
 // Delete method
-func (s *UserService) Delete(id models.ID) (bool, error) {
+func (s *UserRepository) Delete(id models.ID) (bool, error) {
 	// check record exists
 	var exists bool
 	if err := s.db.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)", id).Scan(&exists).Error; err != nil {
@@ -122,7 +123,7 @@ func (s *UserService) Delete(id models.ID) (bool, error) {
 }
 
 // GetCount method
-func (s *UserService) GetCount(o options.ListOptions) (int64, error) {
+func (s *UserRepository) GetCount(o options.ListOptions) (int64, error) {
 	var count int64
 	if err := s.db.Model(&models.User{}).
 		Scopes(scopes.All(o), scopes.SearchUser(o)).
@@ -133,7 +134,7 @@ func (s *UserService) GetCount(o options.ListOptions) (int64, error) {
 }
 
 // CheckExists method
-func (s *UserService) CheckExists(option options.ExistOptions) (models.ID, error) {
+func (s *UserRepository) CheckExists(option options.ExistOptions) (models.ID, error) {
 	condition := models.User{}
 
 	switch option.Field {
@@ -155,7 +156,7 @@ func (s *UserService) CheckExists(option options.ExistOptions) (models.ID, error
 }
 
 // Validate method
-func (s *UserService) Validate(option options.ValidateOptions) (bool, error) {
+func (s *UserRepository) Validate(option options.ValidateOptions) (bool, error) {
 	// Required validations
 	if option.Name == "" {
 		return false, errors.New("Username is required")

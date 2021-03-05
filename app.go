@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 
-	"fanda-api/controllers"
 	"fanda-api/models"
-	"fanda-api/services"
+	"fanda-api/repositories"
+	"fanda-api/routes"
 
 	"github.com/gorilla/mux"
 	"gorm.io/driver/sqlite"
@@ -18,17 +18,17 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// App type
-type App struct {
-	Router         *mux.Router
-	APIRouter      *mux.Router
-	DBContext      *models.DBContext
-	UserController *controllers.UserController
-}
-
 // NewApp method
 func NewApp() *App {
 	return &App{}
+}
+
+// App type
+type App struct {
+	Router    *mux.Router
+	APIRouter *mux.Router
+	DBContext *models.DBContext
+	UserRoute *routes.UserRoute
 }
 
 // Initialize method
@@ -62,15 +62,15 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 	a.initializeAPIRoutes(a.APIRouter, a.DBContext)
 }
 
-func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
-	a.UserController = controllers.NewUserController(services.NewUserService(dbc.DB))
-	a.UserController.Initialize(r)
-}
-
 // Run method
 func (a *App) Run(addr string) {
 	println(fmt.Sprintf("Running server http://%s/", addr))
 	log.Fatal(http.ListenAndServe(addr, a.Router))
+}
+
+func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
+	a.UserRoute = routes.NewUserRoute(repositories.NewUserRepository(dbc.DB))
+	a.UserRoute.Initialize(r)
 }
 
 // create tables
