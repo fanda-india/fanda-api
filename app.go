@@ -52,8 +52,8 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 
 	// Create router
 	a.Router = mux.NewRouter()
-	a.Router.StrictSlash(true)
-	a.Router.HandleFunc("/api/health/", func(w http.ResponseWriter, r *http.Request) {
+	// a.Router.StrictSlash(true)
+	a.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
 

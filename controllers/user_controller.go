@@ -26,13 +26,13 @@ func NewUserController(s *services.UserService) *UserController {
 
 // Initialize method
 func (c *UserController) Initialize(router *mux.Router) {
-	router.HandleFunc("/users/", c.list).Methods(http.MethodGet)
-	router.HandleFunc("/users/", c.create).Methods(http.MethodPost)
-	router.HandleFunc("/users/{id:[0-9]+}/", c.read).Methods(http.MethodGet)
-	router.HandleFunc("/users/{id:[0-9]+}/", c.update).Methods(http.MethodPatch)
-	router.HandleFunc("/users/{id:[0-9]+}/", c.delete).Methods(http.MethodDelete)
-	router.HandleFunc("/users/count/", c.count).Methods(http.MethodGet)
-	router.HandleFunc("/users/exists/", c.exists).Methods(http.MethodGet)
+	router.HandleFunc("/users", c.list).Methods(http.MethodGet)
+	router.HandleFunc("/users", c.create).Methods(http.MethodPost)
+	router.HandleFunc("/users/{id:[0-9]+}", c.read).Methods(http.MethodGet)
+	router.HandleFunc("/users/{id:[0-9]+}", c.update).Methods(http.MethodPatch)
+	router.HandleFunc("/users/{id:[0-9]+}", c.delete).Methods(http.MethodDelete)
+	router.HandleFunc("/users/count", c.count).Methods(http.MethodGet)
+	router.HandleFunc("/users/exists", c.exists).Methods(http.MethodGet)
 }
 
 /****************** ROUTE METHODS ********************/
@@ -42,7 +42,6 @@ func (c *UserController) list(w http.ResponseWriter, r *http.Request) {
 	if result, err := c.service.List(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		//payload := map[string]interface{}{"data": apiusers, "count": count}
 		respondWithJSON(w, http.StatusOK, result)
 	}
 }
@@ -137,7 +136,7 @@ func (c *UserController) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
+	respondWithJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 }
 
 func (c *UserController) count(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +145,7 @@ func (c *UserController) count(w http.ResponseWriter, r *http.Request) {
 	if c, err := c.service.GetCount(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		respondWithJSON(w, http.StatusOK, map[string]interface{}{"count": c})
+		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
 	}
 }
 
@@ -156,6 +155,6 @@ func (c *UserController) exists(w http.ResponseWriter, r *http.Request) {
 	if id, err := c.service.CheckExists(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
-		respondWithJSON(w, http.StatusOK, map[string]interface{}{"id": id})
+		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})
 	}
 }
