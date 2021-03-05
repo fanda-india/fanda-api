@@ -2,15 +2,15 @@ package models
 
 // Contact db model
 type Contact struct {
-	ID           ID      `gorm:"primaryKey;autoIncrement;not null"`
-	Salutation   *string `gorm:"size:5"`
-	FirstName    *string `gorm:"size:25"`
-	LastName     *string `gorm:"size:25"`
-	Designation  *string `gorm:"size:25"`
-	Department   *string `gorm:"size:25"`
-	Email        *string `gorm:"size:100"`
-	WorkPhone    *string `gorm:"size:25"`
-	MobileNumber *string `gorm:"size:25"`
+	ID           ID      `gorm:"primaryKey;autoIncrement;not null" json:"id,omitempty"`
+	Salutation   *string `gorm:"size:5" json:"salutation,omitempty"`
+	FirstName    *string `gorm:"size:25" json:"firstName,omitempty"`
+	LastName     *string `gorm:"size:25" json:"lastName,omitempty"`
+	Designation  *string `gorm:"size:25" json:"designation,omitempty"`
+	Department   *string `gorm:"size:25" json:"department,omitempty"`
+	Email        *string `gorm:"size:100" json:"email,omitempty"`
+	WorkPhone    *string `gorm:"size:25" json:"workPhone,omitempty"`
+	MobileNumber *string `gorm:"size:25" json:"mobileNumber,omitempty"`
 }
 
 // IsEmpty method

@@ -20,3 +20,16 @@ func SearchUser(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 			sql.Named("search", o.Search))
 	}
 }
+
+// SearchOrg scope
+func SearchOrg(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+
+		if o.Search == "" {
+			return db
+		}
+		o.Search = "%" + o.Search + "%"
+		return db.Where("(code LIKE @search OR name LIKE @search OR description LIKE @search)",
+			sql.Named("search", o.Search))
+	}
+}

@@ -2,7 +2,7 @@ package dtos
 
 import "fanda-api/models"
 
-// UserDto type
+// UserDto model
 type UserDto struct {
 	ID           models.ID `json:"id,omitempty"`
 	UserName     string    `json:"userName,omitempty"`

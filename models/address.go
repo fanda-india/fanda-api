@@ -2,16 +2,16 @@ package models
 
 // Address db model
 type Address struct {
-	ID         ID      `gorm:"primaryKey;autoIncrement;not null"`
-	Attention  *string `gorm:"size:25"`
-	Line1      *string `gorm:"size:50"`
-	Line2      *string `gorm:"size:50"`
-	City       *string `gorm:"size:25"`
-	State      *string `gorm:"size:25"`
-	Country    *string `gorm:"size:25"`
-	PostalCode *string `gorm:"size:10"`
-	Phone      *string `gorm:"size:25"`
-	Fax        *string `gorm:"size:25"`
+	ID         ID      `gorm:"primaryKey;autoIncrement;not null" json:"id,omitempty"`
+	Attention  *string `gorm:"size:25" json:"attention,omitempty"`
+	Line1      *string `gorm:"size:50" json:"line1,omitempty"`
+	Line2      *string `gorm:"size:50" json:"line2,omitempty"`
+	City       *string `gorm:"size:25" json:"city,omitempty"`
+	State      *string `gorm:"size:25" json:"state,omitempty"`
+	Country    *string `gorm:"size:25" json:"country,omitempty"`
+	PostalCode *string `gorm:"size:10" json:"postalCode,omitempty"`
+	Phone      *string `gorm:"size:25" json:"phone,omitempty"`
+	Fax        *string `gorm:"size:25" json:"fax,omitempty"`
 }
 
 // IsEmpty method
