@@ -67,8 +67,13 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 
 // Run method
 func (a *App) Run(addr string) {
+	// CORS
+	// Where ORIGIN_ALLOWED is like `scheme://dns[:port]`, or `*` (insecure)
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"})
 	println(fmt.Sprintf("Running server http://%s/", addr))
-	log.Fatal(http.ListenAndServe(addr, handlers.CORS()(a.Router)))
+	log.Fatal(http.ListenAndServe(addr, handlers.CORS(headersOk, originsOk, methodsOk)(a.Router)))
 }
 
 func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
