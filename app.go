@@ -12,6 +12,7 @@ import (
 	"fanda-api/repositories"
 	"fanda-api/routes"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -67,7 +68,7 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 // Run method
 func (a *App) Run(addr string) {
 	println(fmt.Sprintf("Running server http://%s/", addr))
-	log.Fatal(http.ListenAndServe(addr, a.Router))
+	log.Fatal(http.ListenAndServe(addr, handlers.CORS()(a.Router)))
 }
 
 func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
