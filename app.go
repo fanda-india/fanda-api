@@ -29,6 +29,7 @@ type App struct {
 	APIRouter *mux.Router
 	DBContext *models.DBContext
 	UserRoute *routes.UserRoute
+	OrgRoute  *routes.OrganizationRoute
 }
 
 // Initialize method
@@ -53,8 +54,7 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 	a.DBContext.Migrate()
 
 	// Create router
-	a.Router = mux.NewRouter()
-	// a.Router.StrictSlash(true)
+	a.Router = mux.NewRouter().StrictSlash(true)
 	a.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
@@ -73,6 +73,9 @@ func (a *App) Run(addr string) {
 func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
 	a.UserRoute = routes.NewUserRoute(repositories.NewUserRepository(dbc.DB))
 	a.UserRoute.Initialize(r)
+
+	a.OrgRoute = routes.NewOrganizationRoute(repositories.NewOrganizationRepository(dbc.DB))
+	a.OrgRoute.Initialize(r)
 }
 
 // create tables
