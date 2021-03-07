@@ -43,8 +43,8 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 			// NowFunc: func() time.Time {
 			// 	return time.Now().Local()
 			// },
-			SkipDefaultTransaction: true,
-			Logger:                 logger.Default.LogMode(logger.Info),
+			// SkipDefaultTransaction: true,
+			Logger: logger.Default.LogMode(logger.Info),
 		}) //sql.Open("postgres", connectionString)
 	if err != nil {
 		log.Fatal(err)

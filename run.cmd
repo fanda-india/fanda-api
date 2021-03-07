@@ -5,4 +5,4 @@
 @REM go build
 @REM fanda-api.exe
 
-CompileDaemon.exe -command=fanda-api.exe
+CompileDaemon.exe -directory=. -command=fanda-api.exe -color=true

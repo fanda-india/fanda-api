@@ -9,7 +9,7 @@ import (
 func main() {
 	const host = "localhost"
 	const port = 8010
-	var addr string = fmt.Sprintf("%s:%d", host, port)
+	var addr = fmt.Sprintf("%s:%d", host, port)
 
 	a := NewApp()
 	a.Initialize()

@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // OrganizationRepository service
@@ -43,7 +44,7 @@ func (repo *OrganizationRepository) List(opts options.ListOptions) (*options.Lis
 func (repo *OrganizationRepository) Read(id models.ID) (*models.Organization, error) {
 	var org models.Organization
 
-	if err := repo.db.First(&org, id).Error; err != nil {
+	if err := repo.db.Preload("Address").Preload("Contact").First(&org, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
@@ -91,9 +92,12 @@ func (repo *OrganizationRepository) Update(id models.ID, org *models.Organizatio
 	}
 
 	// update
-	if err := repo.db.Model(&models.Organization{}).
-		Where("id = ?", id).
-		Updates(org).Error; err != nil {
+	// if err := repo.db.Model(&models.Organization{}).
+	// 	Where("id = ?", id).
+	// 	Updates(org).Error; err != nil {
+	// 	return nil, err
+	// }
+	if err := repo.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&org).Error; err != nil {
 		return nil, err
 	}
 	return org, nil
@@ -110,7 +114,17 @@ func (repo *OrganizationRepository) Delete(id models.ID) (bool, error) {
 		return false, options.NewNotFoundError("Organization")
 	}
 
-	if err := repo.db.Delete(&models.Organization{}, id).Error; err != nil {
+	org, err := repo.Read(id)
+	if err != nil {
+		return false, err
+	}
+	if err := repo.db.Select(clause.Associations).Delete(&org).Error; err != nil {
+		return false, err
+	}
+	if err := repo.db.Delete(&org.Address).Error; err != nil {
+		return false, err
+	}
+	if err := repo.db.Delete(&org.Contact).Error; err != nil {
 		return false, err
 	}
 	return true, nil
