@@ -2,8 +2,8 @@ package options
 
 // ListOptions type
 type ListOptions struct {
-	All    bool
-	Search string
-	Page   int
-	Size   int
+	All    bool   `json:"all"`
+	Search string `json:"search"`
+	Page   int    `json:"page"`
+	Size   int    `json:"size"`
 }

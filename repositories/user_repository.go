@@ -95,13 +95,14 @@ func (repo *UserRepository) Update(id models.ID, userDto *dtos.UserDto) (*dtos.U
 	}
 
 	// update
-	user.ID = 0
+	// user.ID = 0
 	if err := repo.db.Model(&models.User{}).
+		Select("UserName", "Email", "MobileNumber", "Password", "FirstName", "LastName", "Active").
 		Where("id = ?", id).
 		Updates(user).Error; err != nil {
 		return nil, err
 	}
-	user.ID = id
+	// user.ID = id
 	return userDto.FromUser(user), nil
 }
 
