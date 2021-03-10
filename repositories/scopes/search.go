@@ -21,8 +21,8 @@ func SearchUser(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	}
 }
 
-// SearchOrg scope
-func SearchOrg(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
+// SearchDefault scope
+func SearchDefault(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 
 		if o.Search == "" {

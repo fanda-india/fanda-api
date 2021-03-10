@@ -13,10 +13,10 @@ type Ledger struct {
 	GroupID      ID            `gorm:"default:NULL" json:"groupId,omitempty"`
 	Group        *LedgerGroup  `gorm:"foreignKey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"group,omitempty"`
 	LedgerType   byte          `gorm:"default:NULL" json:"ledgerType,omitempty"`
-	IsSystem     bool          `gorm:"default:false" json:"isSystem,omitempty"`
+	IsSystem     *bool         `gorm:"default:false" json:"isSystem,omitempty"`
 	OrgID        ID            `gorm:"index:idx_ledgers_code,unique;index:idx_ledgers_name,unique" json:"orgId,omitempty"`
 	Organization *Organization `gorm:"foreignKey:OrgID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION"`
 	CreatedAt    time.Time     `json:"createdAt,omitempty"`
 	UpdatedAt    time.Time     `json:"updatedAt,omitempty"`
-	Active       bool          `gorm:"default:true" json:"active,omitempty"`
+	Active       *bool         `gorm:"default:true" json:"active,omitempty"`
 }

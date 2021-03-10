@@ -1,6 +1,7 @@
 package scopes
 
 import (
+	"fanda-api/models"
 	"fanda-api/options"
 
 	"gorm.io/gorm"
@@ -40,5 +41,12 @@ func All(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 			return db.Where("active = ?", true)
 		}
 		return db
+	}
+}
+
+// OrgID scope
+func OrgID(orgID models.ID) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("org_id = ?", orgID)
 	}
 }

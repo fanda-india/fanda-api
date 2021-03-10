@@ -28,7 +28,7 @@ func (repo *OrganizationRepository) List(opts options.ListOptions) (*options.Lis
 	var orgs []models.Organization
 
 	if err := repo.db.
-		Scopes(scopes.Paginate(opts), scopes.All(opts), scopes.SearchOrg(opts)).
+		Scopes(scopes.Paginate(opts), scopes.All(opts), scopes.SearchDefault(opts)).
 		Find(&orgs).Error; err != nil {
 		return nil, err
 	}
@@ -44,7 +44,9 @@ func (repo *OrganizationRepository) List(opts options.ListOptions) (*options.Lis
 func (repo *OrganizationRepository) Read(id models.ID) (*models.Organization, error) {
 	var org models.Organization
 
-	if err := repo.db.Preload("Address").Preload("Contact").First(&org, id).Error; err != nil {
+	if err := repo.db.
+		Preload("Address").Preload("Contact").
+		First(&org, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
 		case gorm.ErrRecordNotFound:
@@ -57,30 +59,33 @@ func (repo *OrganizationRepository) Read(id models.ID) (*models.Organization, er
 }
 
 // Create method
-func (repo *OrganizationRepository) Create(org *models.Organization) (*models.Organization, error) {
+func (repo *OrganizationRepository) Create(org *models.Organization) error {
 	// validate
 	var opts = options.ValidateOptions{ID: org.ID, Code: org.Code, Name: org.Name}
 	_, err := repo.Validate(opts)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// create
 	if err := repo.db.Create(&org).Error; err != nil {
-		return nil, err
+		return err
 	}
-	return org, nil
+	return nil
 }
 
 // Update method
-func (repo *OrganizationRepository) Update(id models.ID, org *models.Organization) (*models.Organization, error) {
+func (repo *OrganizationRepository) Update(id models.ID, org *models.Organization) error {
 	// check record exists
-	var exists bool
-	if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM organizations WHERE id = ?)", id).Scan(&exists).Error; err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, options.NewNotFoundError("Organization")
+	// var exists bool
+	// if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM organizations WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+	// 	return nil, err
+	// }
+	var existOpts = options.ExistOptions{ID: id, Field: enums.IDField}
+	if existID, err := repo.CheckExists(existOpts); err != nil {
+		return err
+	} else if id != existID {
+		return options.NewNotFoundError("Organization")
 	}
 	org.ID = id
 
@@ -88,7 +93,7 @@ func (repo *OrganizationRepository) Update(id models.ID, org *models.Organizatio
 	var opts = options.ValidateOptions{ID: org.ID, Code: org.Code, Name: org.Name}
 	_, err := repo.Validate(opts)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// update
@@ -97,20 +102,24 @@ func (repo *OrganizationRepository) Update(id models.ID, org *models.Organizatio
 	// 	Updates(org).Error; err != nil {
 	// 	return nil, err
 	// }
-	if err := repo.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&org).Error; err != nil {
-		return nil, err
+	if err := repo.db.Session(&gorm.Session{FullSaveAssociations: true}).
+		Updates(&org).Error; err != nil {
+		return err
 	}
-	return org, nil
+	return nil
 }
 
 // Delete method
 func (repo *OrganizationRepository) Delete(id models.ID) (bool, error) {
 	// check record exists
-	var exists bool
-	if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM organizations WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+	// var exists bool
+	// if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM organizations WHERE id = ?)", id).Scan(&exists).Error; err != nil {
+	// 	return false, err
+	// }
+	var opts = options.ExistOptions{ID: id, Field: enums.IDField}
+	if existID, err := repo.CheckExists(opts); err != nil {
 		return false, err
-	}
-	if !exists {
+	} else if id != existID {
 		return false, options.NewNotFoundError("Organization")
 	}
 
@@ -134,7 +143,7 @@ func (repo *OrganizationRepository) Delete(id models.ID) (bool, error) {
 func (repo *OrganizationRepository) GetCount(opts options.ListOptions) (int64, error) {
 	var count int64
 	if err := repo.db.Model(&models.Organization{}).
-		Scopes(scopes.All(opts), scopes.SearchOrg(opts)).
+		Scopes(scopes.All(opts), scopes.SearchDefault(opts)).
 		Count(&count).Error; err != nil {
 		return -1, err
 	}
@@ -146,16 +155,21 @@ func (repo *OrganizationRepository) CheckExists(opts options.ExistOptions) (mode
 	condition := models.Organization{}
 
 	switch opts.Field {
-	case enums.Code:
+	case enums.IDField:
+		condition.ID = opts.ID
+	case enums.CodeField:
 		condition.Code = opts.Value
-	case enums.Name:
+	case enums.NameField:
 		condition.Name = opts.Value
 	default:
 		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
 	}
 
 	var id models.ID
-	if err := repo.db.Model(&models.Organization{}).Select("id").Where(&condition).Scan(&id).Error; err != nil {
+	if err := repo.db.Model(&models.Organization{}).
+		Select("id").
+		Where(&condition).
+		Scan(&id).Error; err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -173,14 +187,14 @@ func (repo *OrganizationRepository) Validate(opts options.ValidateOptions) (bool
 
 	// Duplicate validations
 	// Code
-	exOpt := options.ExistOptions{Field: enums.Code, Value: opts.Code}
+	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != uint(opts.ID) {
 		return false, errors.New("Org. code already exists")
 	}
 	// Name
-	exOpt = options.ExistOptions{Field: enums.Name, Value: opts.Name}
+	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != uint(opts.ID) {

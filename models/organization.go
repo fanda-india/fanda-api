@@ -21,5 +21,5 @@ type Organization struct {
 	ActiveYearID *ID       `gorm:"default:NULL" json:"activeYearId,omitempty"`
 	CreatedAt    time.Time `json:"createdAt,omitempty"`
 	UpdatedAt    time.Time `json:"updatedAt,omitempty"`
-	Active       bool      `gorm:"default:true" json:"active,omitempty"`
+	Active       *bool     `gorm:"default:true" json:"active,omitempty"`
 }

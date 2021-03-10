@@ -26,11 +26,12 @@ func NewApp() *App {
 
 // App type
 type App struct {
-	Router    *mux.Router
-	APIRouter *mux.Router
-	DBContext *models.DBContext
-	UserRoute *routes.UserRoute
-	OrgRoute  *routes.OrganizationRoute
+	Router      *mux.Router
+	APIRouter   *mux.Router
+	DBContext   *models.DBContext
+	UserRoute   *routes.UserRoute
+	OrgRoute    *routes.OrganizationRoute
+	LedgerRoute *routes.LedgerRoute
 }
 
 // Initialize method
@@ -70,8 +71,9 @@ func (a *App) Run(addr string) {
 	// CORS
 	// Where ORIGIN_ALLOWED is like `scheme://dns[:port]`, or `*` (insecure)
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
+	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	methodsOk := handlers.AllowedMethods([]string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"})
+
 	println(fmt.Sprintf("Running server http://%s/", addr))
 	log.Fatal(http.ListenAndServe(addr, handlers.CORS(headersOk, originsOk, methodsOk)(a.Router)))
 }
@@ -82,6 +84,9 @@ func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
 
 	a.OrgRoute = routes.NewOrganizationRoute(repositories.NewOrganizationRepository(dbc.DB))
 	a.OrgRoute.Initialize(r)
+
+	a.LedgerRoute = routes.NewLedgerRoute(repositories.NewLedgerRepository(dbc.DB))
+	a.LedgerRoute.Initialize(r)
 }
 
 // create tables

@@ -38,7 +38,7 @@ func (route *UserRoute) Initialize(router *mux.Router) {
 /****************** ROUTE METHODS ********************/
 
 func (route *UserRoute) list(w http.ResponseWriter, r *http.Request) {
-	o := requestToListOptions(r)
+	o := queryToListOptions(r)
 	if result, err := route.repo.List(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -78,13 +78,13 @@ func (route *UserRoute) create(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	createdUser, err := route.repo.Create(&user)
+	err := route.repo.Create(&user)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("%s%s%s/%d", r.URL.Scheme, r.Host, r.RequestURI, user.ID))
-	respondWithJSON(w, http.StatusCreated, createdUser)
+	respondWithJSON(w, http.StatusCreated, user)
 }
 
 func (route *UserRoute) update(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ func (route *UserRoute) update(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	updatedUser, err := route.repo.Update(models.ID(id), &user)
+	err = route.repo.Update(models.ID(id), &user)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -114,7 +114,7 @@ func (route *UserRoute) update(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	respondWithJSON(w, http.StatusOK, updatedUser)
+	respondWithJSON(w, http.StatusOK, user)
 }
 
 func (route *UserRoute) delete(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +140,7 @@ func (route *UserRoute) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *UserRoute) count(w http.ResponseWriter, r *http.Request) {
-	o := requestToListOptions(r)
+	o := queryToListOptions(r)
 
 	if c, err := route.repo.GetCount(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -150,7 +150,11 @@ func (route *UserRoute) count(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *UserRoute) exists(w http.ResponseWriter, r *http.Request) {
-	o := requestToExistOptions(r)
+	o := queryToExistOptions(r)
+	if o.Value == "" {
+		respondWithError(w, http.StatusBadRequest, "Value is required")
+		return
+	}
 
 	if id, err := route.repo.CheckExists(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())

@@ -7,6 +7,7 @@ import (
 
 // ExistOptions type
 type ExistOptions struct {
+	ID       models.ID
 	Field    enums.KeyField
 	Value    string
 	ParentID models.ID

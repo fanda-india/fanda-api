@@ -2,13 +2,16 @@ package routes
 
 import (
 	"fanda-api/enums"
+	"fanda-api/models"
 	"fanda-api/options"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
-// requestToListOptions method
-func requestToListOptions(r *http.Request) options.ListOptions {
+// queryToListOptions method
+func queryToListOptions(r *http.Request) options.ListOptions {
 	query := r.URL.Query()
 	all, _ := strconv.ParseBool(query.Get("all"))
 	search := query.Get("search")
@@ -18,11 +21,25 @@ func requestToListOptions(r *http.Request) options.ListOptions {
 	return options.ListOptions{All: all, Search: search, Page: page, Size: size}
 }
 
-// requestToExistOptions method
-func requestToExistOptions(r *http.Request) options.ExistOptions {
+// queryToExistOptions method
+func queryToExistOptions(r *http.Request) options.ExistOptions {
 	query := r.URL.Query()
 	field := query.Get("field")
 	value := query.Get("value")
 
 	return options.ExistOptions{Field: enums.KeyFieldConst(field), Value: value}
+}
+
+// readPathRequest
+func readPathRequest(r *http.Request) (models.ID, models.ID, error) {
+	vars := mux.Vars(r)
+	orgID, err := strconv.ParseUint(vars["orgId"], 10, 32)
+	if err != nil {
+		return 0, models.ID(orgID), err
+	}
+	id, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		return models.ID(id), models.ID(orgID), err
+	}
+	return models.ID(id), models.ID(orgID), nil
 }

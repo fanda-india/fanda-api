@@ -3,19 +3,21 @@ package enums
 import "fanda-api/utils"
 
 // KeyField enum
-type KeyField uint8
+type KeyField byte
 
 const (
-	// Code key field
-	Code KeyField = iota + 1
-	// Name key field
-	Name
-	// Email key field
-	Email
-	// Mobile key field
-	Mobile
-	// Number key field
-	Number
+	// IDField enum
+	IDField KeyField = iota
+	// CodeField enum
+	CodeField
+	// NameField enum
+	NameField
+	// EmailField enum
+	EmailField
+	// MobileField enum
+	MobileField
+	// NumberField enum
+	NumberField
 )
 
 var keyFields = []string{"", "Code", "Name", "Email", "Mobile", "Number"}

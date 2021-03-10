@@ -37,7 +37,7 @@ func (route *OrganizationRoute) Initialize(router *mux.Router) {
 /****************** ROUTE METHODS ********************/
 
 func (route *OrganizationRoute) list(w http.ResponseWriter, r *http.Request) {
-	o := requestToListOptions(r)
+	o := queryToListOptions(r)
 	if result, err := route.repo.List(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -76,13 +76,13 @@ func (route *OrganizationRoute) create(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	createdOrg, err := route.repo.Create(&org)
+	err := route.repo.Create(&org)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("%s%s%s/%d", r.URL.Scheme, r.Host, r.RequestURI, org.ID))
-	respondWithJSON(w, http.StatusCreated, createdOrg)
+	respondWithJSON(w, http.StatusCreated, org)
 }
 
 func (route *OrganizationRoute) update(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +101,7 @@ func (route *OrganizationRoute) update(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	updatedOrg, err := route.repo.Update(models.ID(id), &org)
+	err = route.repo.Update(models.ID(id), &org)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -112,7 +112,7 @@ func (route *OrganizationRoute) update(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	respondWithJSON(w, http.StatusOK, updatedOrg)
+	respondWithJSON(w, http.StatusOK, org)
 }
 
 func (route *OrganizationRoute) delete(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +138,7 @@ func (route *OrganizationRoute) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *OrganizationRoute) count(w http.ResponseWriter, r *http.Request) {
-	o := requestToListOptions(r)
+	o := queryToListOptions(r)
 
 	if c, err := route.repo.GetCount(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -148,7 +148,7 @@ func (route *OrganizationRoute) count(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *OrganizationRoute) exists(w http.ResponseWriter, r *http.Request) {
-	o := requestToExistOptions(r)
+	o := queryToExistOptions(r)
 
 	if id, err := route.repo.CheckExists(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())

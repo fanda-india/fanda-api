@@ -1,19 +1,19 @@
 package enums
 
 // LedgerGroupType enum
-type LedgerGroupType uint8
+type LedgerGroupType byte
 
 const (
-	// Asset group type
-	Asset LedgerGroupType = iota + 1
-	// Liability group type
-	Liability
-	// Revenue group type
-	Revenue
-	// Income group type
-	Income
-	// Expense group type
-	Expense
+	// AssetGroup enum
+	AssetGroup LedgerGroupType = iota + 1
+	// LiabilityGroup enum
+	LiabilityGroup
+	// RevenueGroup enum
+	RevenueGroup
+	// IncomeGroup enum
+	IncomeGroup
+	// ExpenseGroup enum
+	ExpenseGroup
 	// Branch
 	// Warehouse
 )
