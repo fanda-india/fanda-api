@@ -38,9 +38,10 @@ func (route *LedgerRoute) Initialize(router *mux.Router) {
 
 func (route *LedgerRoute) list(w http.ResponseWriter, r *http.Request) {
 	o := queryToListOptions(r)
-	_, orgID, err := readPathRequest(r)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid orgId/Id")
+	_, orgID := readPathRequest(r)
+	if orgID <= 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid Org. Id")
+		return
 	}
 	if result, err := route.repo.List(orgID, o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -50,21 +51,9 @@ func (route *LedgerRoute) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *LedgerRoute) read(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
-	// orgID, err := strconv.ParseUint(vars["orgId"], 10, 32)
-	// if err != nil {
-	// 	respondWithError(w, http.StatusBadRequest, "Invalid org ID")
-	// 	return
-	// }
-	// id, err := strconv.ParseUint(vars["id"], 10, 32)
-	// if err != nil {
-	// 	respondWithError(w, http.StatusBadRequest, "Invalid ledger ID")
-	// 	return
-	// }
-
-	id, orgID, err := readPathRequest(r)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid orgId/Id")
+	id, orgID := readPathRequest(r)
+	if id <= 0 || orgID <= 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid orgId or Id")
 	}
 
 	ledger, err := route.repo.Read(orgID, id)
@@ -82,20 +71,21 @@ func (route *LedgerRoute) read(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *LedgerRoute) create(w http.ResponseWriter, r *http.Request) {
-	_, orgID, err := readPathRequest(r)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid orgId/Id")
+	_, orgID := readPathRequest(r)
+	if orgID <= 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid Org. Id")
+		return
 	}
 
 	var ledger models.Ledger
 	decoder := json.NewDecoder(r.Body)
-	if err = decoder.Decode(&ledger); err != nil {
+	defer r.Body.Close()
+	if err := decoder.Decode(&ledger); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	defer r.Body.Close()
 
-	err = route.repo.Create(orgID, &ledger)
+	err := route.repo.Create(orgID, &ledger)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -114,11 +104,11 @@ func (route *LedgerRoute) update(w http.ResponseWriter, r *http.Request) {
 
 	var ledger models.Ledger
 	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 	if err := decoder.Decode(&ledger); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid resquest payload")
 		return
 	}
-	defer r.Body.Close()
 
 	err = route.repo.Update(models.ID(id), &ledger)
 	if err != nil {

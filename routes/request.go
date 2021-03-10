@@ -31,15 +31,10 @@ func queryToExistOptions(r *http.Request) options.ExistOptions {
 }
 
 // readPathRequest
-func readPathRequest(r *http.Request) (models.ID, models.ID, error) {
+func readPathRequest(r *http.Request) (models.ID, models.ID) {
 	vars := mux.Vars(r)
-	orgID, err := strconv.ParseUint(vars["orgId"], 10, 32)
-	if err != nil {
-		return 0, models.ID(orgID), err
-	}
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		return models.ID(id), models.ID(orgID), err
-	}
-	return models.ID(id), models.ID(orgID), nil
+	orgID, _ := strconv.ParseUint(vars["orgId"], 10, 32)
+	id, _ := strconv.ParseUint(vars["id"], 10, 32)
+
+	return models.ID(id), models.ID(orgID)
 }

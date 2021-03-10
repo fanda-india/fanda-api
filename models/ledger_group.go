@@ -8,5 +8,5 @@ type LedgerGroup struct {
 	Description *string      `gorm:"size:255" json:"description,omitempty"`
 	GroupType   byte         `gorm:"default:NULL" json:"groupType,omitempty"`
 	ParentID    *ID          `gorm:"default:NULL" json:"parentId,omitempty"`
-	Parent      *LedgerGroup `gorm:"foreignKey:ParentID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"parent,omitempty"`
+	Parent      *LedgerGroup `gorm:"foreignKey:ParentID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"-"`
 }

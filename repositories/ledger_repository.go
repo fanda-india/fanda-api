@@ -68,6 +68,7 @@ func (repo *LedgerRepository) Create(orgID models.ID, ledger *models.Ledger) err
 	}
 
 	// create
+	ledger.OrgID = orgID
 	if err := repo.db.Create(&ledger).Error; err != nil {
 		return err
 	}
