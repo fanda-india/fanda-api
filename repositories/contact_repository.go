@@ -10,9 +10,9 @@ import (
 type ContactRepository struct{}
 
 // NewContactRepository method
-func NewContactRepository() *ContactRepository {
-	return &ContactRepository{}
-}
+//func NewContactRepository() *ContactRepository {
+//	return &ContactRepository{}
+//}
 
 // Save method
 func (repo *ContactRepository) Save(contact *models.Contact, tx *gorm.DB) (*models.ID, error) {

@@ -10,9 +10,9 @@ import (
 type AddressRepository struct{}
 
 // NewAddressRepository method
-func NewAddressRepository() *AddressRepository {
-	return &AddressRepository{}
-}
+//func NewAddressRepository() *AddressRepository {
+//	return &AddressRepository{}
+//}
 
 // Save method
 func (repo *AddressRepository) Save(address *models.Address, tx *gorm.DB) (*models.ID, error) {

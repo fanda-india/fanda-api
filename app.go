@@ -32,6 +32,7 @@ type App struct {
 	UserRoute   *routes.UserRoute
 	OrgRoute    *routes.OrganizationRoute
 	LedgerRoute *routes.LedgerRoute
+	BankRoute   *routes.BankRoute
 }
 
 // Initialize method
@@ -58,7 +59,7 @@ func (a *App) Initialize( /*user, password, dbname string*/ ) {
 	// Create router
 	a.Router = mux.NewRouter().StrictSlash(true)
 	a.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
 
 	// Init routes
@@ -87,6 +88,9 @@ func (a *App) initializeAPIRoutes(r *mux.Router, dbc *models.DBContext) {
 
 	a.LedgerRoute = routes.NewLedgerRoute(repositories.NewLedgerRepository(dbc.DB))
 	a.LedgerRoute.Initialize(r)
+
+	a.BankRoute = routes.NewBankRoute(repositories.NewBankRepository(dbc.DB))
+	a.BankRoute.Initialize(r)
 }
 
 // create tables

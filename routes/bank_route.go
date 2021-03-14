@@ -13,30 +13,30 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// LedgerRoute type
-type LedgerRoute struct {
-	repo *repositories.LedgerRepository
+// BankRoute type
+type BankRoute struct {
+	repo *repositories.BankRepository
 }
 
-// NewLedgerRoute method
-func NewLedgerRoute(r *repositories.LedgerRepository) *LedgerRoute {
-	return &LedgerRoute{repo: r}
+// NewBankRoute method
+func NewBankRoute(r *repositories.BankRepository) *BankRoute {
+	return &BankRoute{repo: r}
 }
 
 // Initialize method
-func (route *LedgerRoute) Initialize(router *mux.Router) {
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers", route.list).Methods(http.MethodGet)
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers", route.create).Methods(http.MethodPost)
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers/{id:[0-9]+}", route.read).Methods(http.MethodGet)
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers/{id:[0-9]+}", route.update).Methods(http.MethodPatch)
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers/{id:[0-9]+}", route.delete).Methods(http.MethodDelete)
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers/count", route.count).Methods(http.MethodGet)
-	router.HandleFunc("/org/{orgId:[0-9]+}/ledgers/exists", route.exists).Methods(http.MethodGet)
+func (route *BankRoute) Initialize(router *mux.Router) {
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks", route.list).Methods(http.MethodGet)
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks", route.create).Methods(http.MethodPost)
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks/{id:[0-9]+}", route.read).Methods(http.MethodGet)
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks/{id:[0-9]+}", route.update).Methods(http.MethodPatch)
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks/{id:[0-9]+}", route.delete).Methods(http.MethodDelete)
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks/count", route.count).Methods(http.MethodGet)
+	router.HandleFunc("/org/{orgId:[0-9]+}/banks/exists", route.exists).Methods(http.MethodGet)
 }
 
 /****************** ROUTE METHODS ********************/
 
-func (route *LedgerRoute) list(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) list(w http.ResponseWriter, r *http.Request) {
 	o := queryToListOptions(r)
 	_, orgID := readPathRequest(r)
 	if orgID <= 0 {
@@ -50,13 +50,13 @@ func (route *LedgerRoute) list(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (route *LedgerRoute) read(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) read(w http.ResponseWriter, r *http.Request) {
 	id, _ := readPathRequest(r)
 	if id <= 0 {
 		respondWithError(w, http.StatusBadRequest, "Invalid orgId or Id")
 	}
 
-	ledger, err := route.repo.Read(id)
+	bank, err := route.repo.Read(id)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -67,50 +67,50 @@ func (route *LedgerRoute) read(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	respondWithJSON(w, http.StatusOK, ledger)
+	respondWithJSON(w, http.StatusOK, bank)
 }
 
-func (route *LedgerRoute) create(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) create(w http.ResponseWriter, r *http.Request) {
 	_, orgID := readPathRequest(r)
 	if orgID <= 0 {
 		respondWithError(w, http.StatusBadRequest, "Invalid Org. Id")
 		return
 	}
 
-	var ledger models.Ledger
+	var bank models.Bank
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
-	if err := decoder.Decode(&ledger); err != nil {
+	if err := decoder.Decode(&bank); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
-	err := route.repo.Create(orgID, &ledger)
+	err := route.repo.Create(orgID, &bank)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	w.Header().Set("Location", fmt.Sprintf("%s%s%s/%d", r.URL.Scheme, r.Host, r.RequestURI, ledger.ID))
-	respondWithJSON(w, http.StatusCreated, ledger)
+	w.Header().Set("Location", fmt.Sprintf("%s%s%s/%d", r.URL.Scheme, r.Host, r.RequestURI, bank.ID))
+	respondWithJSON(w, http.StatusCreated, bank)
 }
 
-func (route *LedgerRoute) update(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ledger ID")
+		respondWithError(w, http.StatusBadRequest, "Invalid bank ID")
 		return
 	}
 
-	var ledger models.Ledger
+	var bank models.Bank
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
-	if err := decoder.Decode(&ledger); err != nil {
+	if err := decoder.Decode(&bank); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid resquest payload")
 		return
 	}
 
-	err = route.repo.Update(models.ID(id), &ledger)
+	err = route.repo.Update(models.ID(id), &bank)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -121,14 +121,14 @@ func (route *LedgerRoute) update(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	respondWithJSON(w, http.StatusOK, ledger)
+	respondWithJSON(w, http.StatusOK, bank)
 }
 
-func (route *LedgerRoute) delete(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ledger ID")
+		respondWithError(w, http.StatusBadRequest, "Invalid bank ID")
 		return
 	}
 	_, err = route.repo.Delete(models.ID(id))
@@ -146,7 +146,7 @@ func (route *LedgerRoute) delete(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 }
 
-func (route *LedgerRoute) count(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) count(w http.ResponseWriter, r *http.Request) {
 	o := queryToListOptions(r)
 
 	if c, err := route.repo.GetCount(o); err != nil {
@@ -156,7 +156,7 @@ func (route *LedgerRoute) count(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (route *LedgerRoute) exists(w http.ResponseWriter, r *http.Request) {
+func (route *BankRoute) exists(w http.ResponseWriter, r *http.Request) {
 	o := queryToExistOptions(r)
 
 	if id, err := route.repo.CheckExists(o); err != nil {

@@ -40,12 +40,11 @@ func (repo *LedgerRepository) List(orgID models.ID, opts options.ListOptions) (*
 }
 
 // Read method
-func (repo *LedgerRepository) Read(orgID models.ID, id models.ID) (*models.Ledger, error) {
+func (repo *LedgerRepository) Read(id models.ID) (*models.Ledger, error) {
 	var ledger models.Ledger
 
 	if err := repo.db.
 		Preload("Address").Preload("Contact").
-		Where("org_id = ?", orgID).
 		First(&ledger, id).Error; err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -182,10 +181,10 @@ func (repo *LedgerRepository) CheckExists(opts options.ExistOptions) (models.ID,
 func (repo *LedgerRepository) Validate(opts options.ValidateOptions) (bool, error) {
 	// Required validations
 	if opts.Code == "" {
-		return false, errors.New("Ledger code is required")
+		return false, errors.New("ledger code is required")
 	}
 	if opts.Name == "" {
-		return false, errors.New("Ledger name is required")
+		return false, errors.New("ledger name is required")
 	}
 
 	// Duplicate validations
@@ -193,15 +192,15 @@ func (repo *LedgerRepository) Validate(opts options.ValidateOptions) (bool, erro
 	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Ledger code already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("ledger code already exists")
 	}
 	// Name
 	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Ledger name already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("ledger name already exists")
 	}
 	return true, nil
 }

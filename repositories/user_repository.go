@@ -145,7 +145,7 @@ func (repo *UserRepository) GetCount(opts options.ListOptions) (int64, error) {
 // CheckExists method
 func (repo *UserRepository) CheckExists(opts options.ExistOptions) (models.ID, error) {
 	if opts.Value == "" && opts.ID == 0 {
-		return 0, errors.New("Value is required")
+		return 0, errors.New("value is required")
 	}
 
 	condition := models.User{}
@@ -177,13 +177,13 @@ func (repo *UserRepository) CheckExists(opts options.ExistOptions) (models.ID, e
 func (repo *UserRepository) Validate(opts options.ValidateOptions) (bool, error) {
 	// Required validations
 	if opts.Name == "" {
-		return false, errors.New("Username is required")
+		return false, errors.New("username is required")
 	}
 	if opts.Email == "" {
-		return false, errors.New("Email is required")
+		return false, errors.New("email is required")
 	}
 	if opts.Mobile == "" {
-		return false, errors.New("Mobile number is required")
+		return false, errors.New("mobile number is required")
 	}
 
 	// Duplicate validations
@@ -191,22 +191,22 @@ func (repo *UserRepository) Validate(opts options.ValidateOptions) (bool, error)
 	exOpt := options.ExistOptions{Field: enums.NameField, Value: opts.Name}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Username already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("username already exists")
 	}
 	// Email
 	exOpt = options.ExistOptions{Field: enums.EmailField, Value: opts.Email}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Email already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("email already exists")
 	}
 	// Mobile number
 	exOpt = options.ExistOptions{Field: enums.MobileField, Value: opts.Mobile}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Mobile number already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("mobile number already exists")
 	}
 	return true, nil
 }

@@ -179,10 +179,10 @@ func (repo *OrganizationRepository) CheckExists(opts options.ExistOptions) (mode
 func (repo *OrganizationRepository) Validate(opts options.ValidateOptions) (bool, error) {
 	// Required validations
 	if opts.Code == "" {
-		return false, errors.New("Org. code is required")
+		return false, errors.New("org. code is required")
 	}
 	if opts.Name == "" {
-		return false, errors.New("Org. name is required")
+		return false, errors.New("org. name is required")
 	}
 
 	// Duplicate validations
@@ -190,15 +190,15 @@ func (repo *OrganizationRepository) Validate(opts options.ValidateOptions) (bool
 	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Org. code already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("org. code already exists")
 	}
 	// Name
 	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
-	} else if id != 0 && id != uint(opts.ID) {
-		return false, errors.New("Org. name already exists")
+	} else if id != 0 && id != opts.ID {
+		return false, errors.New("org. name already exists")
 	}
 	return true, nil
 }

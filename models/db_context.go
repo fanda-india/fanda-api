@@ -25,4 +25,6 @@ func (dbc *DBContext) Migrate() {
 	dbc.DB.AutoMigrate(&Organization{})
 	dbc.DB.AutoMigrate(&LedgerGroup{})
 	dbc.DB.AutoMigrate(&Ledger{})
+	dbc.DB.AutoMigrate(&Bank{})
+	dbc.DB.AutoMigrate(&Party{})
 }
