@@ -25,33 +25,20 @@ func NewBankRepository(db *gorm.DB) *BankRepository {
 
 // List method
 func (repo *BankRepository) List(orgID models.ID, opts options.ListOptions) (*options.ListResult, error) {
-	var banks []models.Bank //dtos.BankDto
-
-	// if err := repo.db.
-	// 	Model(&models.Bank{}).
-	// 	// Association("Ledger").
-	// 	// Scopes(scopes.Paginate(opts), scopes.All(opts), scopes.SearchDefault(opts)).
-	// 	Find(&banks).Error; err != nil {
-	// 	return nil, err
-	// }
+	var banks []models.Bank
 
 	if err := repo.db.
 		Model(&models.Bank{}).
 		Joins("Ledger").
 		Scopes(scopes.Paginate(opts), scopes.All(opts), scopes.SearchDefault(opts)).
-		// Raw("select banks.id, ledgers.code, ledgers.name, ledgers.description," +
-		// 	"banks.account_number, banks.account_type, banks.ifsc_code, banks.micr_code, banks.branch_code, banks.branch_name, banks.is_default," +
-		// 	"ledgers.org_id, ledgers.active " +
-		// 	"from banks inner join ledgers on banks.ledger_id=ledgers.id").
 		Find(&banks).Error; err != nil {
 		return nil, err
 	}
 	banksDto := make([]dtos.BankDto, len(banks))
 	for i, v := range banks {
-		banksDto[i].FromBank(&v)
+		banksDto[i].FromBank(v)
 
 	}
-	// "where org_id = @orgId", sql.Named("orgId", orgID)
 	count, err := repo.GetCount(opts)
 	if err != nil {
 		return nil, err
@@ -61,7 +48,7 @@ func (repo *BankRepository) List(orgID models.ID, opts options.ListOptions) (*op
 }
 
 // Read method
-func (repo *BankRepository) Read(id models.ID) (*models.Bank, error) {
+func (repo *BankRepository) Read(id models.ID) (*dtos.BankDto, error) {
 	var bank models.Bank
 
 	if err := repo.db.
@@ -76,7 +63,7 @@ func (repo *BankRepository) Read(id models.ID) (*models.Bank, error) {
 			return nil, err
 		}
 	}
-	return &bank, nil
+	return (&dtos.BankDto{}).FromBank(bank), nil
 }
 
 // Create method

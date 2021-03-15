@@ -9,19 +9,19 @@ import (
 type BankDto struct {
 	ID models.ID `json:"id"`
 	// LedgerID      models.ID              `json:"ledgerId"`
-	Code          string                 `json:"code"`
-	Name          string                 `json:"name"`
-	Description   *string                `json:"description"`
-	AccountNumber *string                `json:"accountNumber"`
-	AccountType   *enums.BankAccountType `json:"accountType"`
-	IfscCode      *string                `json:"ifscCode"`
-	MicrCode      *string                `json:"micrCode"`
-	BranchCode    *string                `json:"branchCode"`
-	BranchName    *string                `json:"branchName"`
-	// Address       *models.Address        `json:"address"`
-	// Contact       *models.Contact        `json:"contact"`
-	IsDefault *bool `json:"isDefault"`
-	Active    *bool `json:"active"`
+	Code          string                 `json:"code,omitempty"`
+	Name          string                 `json:"name,omitempty"`
+	Description   *string                `json:"description,omitempty"`
+	AccountNumber *string                `json:"accountNumber,omitempty"`
+	AccountType   *enums.BankAccountType `json:"accountType,omitempty"`
+	IfscCode      *string                `json:"ifscCode,omitempty"`
+	MicrCode      *string                `json:"micrCode,omitempty"`
+	BranchCode    *string                `json:"branchCode,omitempty"`
+	BranchName    *string                `json:"branchName,omitempty"`
+	Address       *models.Address        `json:"address,omitempty"`
+	Contact       *models.Contact        `json:"contact,omitempty"`
+	IsDefault     *bool                  `json:"isDefault,omitempty"`
+	Active        *bool                  `json:"active,omitempty"`
 }
 
 func (b *BankDto) ToBank() *models.Bank {
@@ -35,15 +35,13 @@ func (b *BankDto) ToBank() *models.Bank {
 		MicrCode:      b.MicrCode,
 		BranchCode:    b.BranchCode,
 		BranchName:    b.BranchName,
-		// AddressID:     b.Address.ID,
-		// Address:       b.Address,
-		// ContactID:     b.Contact.ID,
-		// Contact:       *b.Contact,
-		IsDefault: b.IsDefault,
+		Address:       b.Address,
+		Contact:       b.Contact,
+		IsDefault:     b.IsDefault,
 	}
 }
 
-func (b *BankDto) FromBank(bank *models.Bank) *models.Bank {
+func (b *BankDto) FromBank(bank models.Bank) *BankDto {
 	b.ID = bank.ID
 	b.Code = bank.Ledger.Code
 	b.Name = bank.Ledger.Name
@@ -55,9 +53,9 @@ func (b *BankDto) FromBank(bank *models.Bank) *models.Bank {
 	b.MicrCode = bank.MicrCode
 	b.BranchCode = bank.BranchCode
 	b.BranchName = bank.BranchName
-	// b.Address = &models.Address{ID: bank.a}
-	// b.Contact = &models.Contact{}
+	b.Address = bank.Address
+	b.Contact = bank.Contact
 	b.IsDefault = bank.IsDefault
 
-	return bank
+	return b
 }

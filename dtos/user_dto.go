@@ -11,7 +11,7 @@ type UserDto struct {
 	Password     string    `json:"password,omitempty"`
 	FirstName    *string   `json:"firstName,omitempty"`
 	LastName     *string   `json:"lastName,omitempty"`
-	Active       *bool     `json:"active"`
+	Active       *bool     `json:"active,omitempty"`
 }
 
 // ToUser method

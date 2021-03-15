@@ -18,6 +18,6 @@ type Bank struct {
 	AddressID     ID                     `json:"addressId"`
 	Address       *Address               `gorm:"foreignKey:AddressID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"address"`
 	ContactID     ID                     `json:"contactId"`
-	Contact       Contact                `gorm:"foreignKey:ContactID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"contact"`
+	Contact       *Contact               `gorm:"foreignKey:ContactID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"contact"`
 	IsDefault     *bool                  `json:"isDefault"`
 }
