@@ -34,6 +34,8 @@ func (repo *BankRepository) List(orgID models.ID, opts options.ListOptions) (*op
 		Find(&banks).Error; err != nil {
 		return nil, err
 	}
+
+	// convert bank to bankdto
 	banksDto := make([]dtos.BankDto, len(banks))
 	for i, v := range banks {
 		banksDto[i].FromBank(v)
@@ -44,7 +46,6 @@ func (repo *BankRepository) List(orgID models.ID, opts options.ListOptions) (*op
 		return nil, err
 	}
 	return &options.ListResult{Data: &banksDto, Count: count}, nil
-
 }
 
 // Read method
@@ -67,24 +68,35 @@ func (repo *BankRepository) Read(id models.ID) (*dtos.BankDto, error) {
 }
 
 // Create method
-func (repo *BankRepository) Create(orgID models.ID, bank *models.Bank) error {
+func (repo *BankRepository) Create(orgID models.ID, dto *dtos.BankDto) error {
 	// validate
-	var opts = options.ValidateOptions{ID: bank.ID, Code: bank.Ledger.Code, Name: bank.Ledger.Name, Number: *bank.AccountNumber}
+	var opts = options.ValidateOptions{
+		ID: dto.ID, Code: dto.Code, Name: dto.Name,
+		Number: *dto.AccountNumber, ParentID: orgID,
+	}
 	_, err := repo.Validate(opts)
 	if err != nil {
 		return err
 	}
 
 	// create
+	groupID, err := getLedgerGroupID(repo.db, "BANKS")
+	if err != nil {
+		return err
+	}
+	bank := dto.ToBank()
+	bank.Ledger.GroupID = groupID
+	bank.Ledger.LedgerType = enums.Bank
 	bank.Ledger.OrgID = orgID
 	if err := repo.db.Create(&bank).Error; err != nil {
 		return err
 	}
+	dto.ID = bank.ID
 	return nil
 }
 
 // Update method
-func (repo *BankRepository) Update(id models.ID, bank *models.Bank) error {
+func (repo *BankRepository) Update(orgID models.ID, id models.ID, bank *models.Bank) error {
 	var existOpts = options.ExistOptions{ID: id, Field: enums.IDField}
 	if existID, err := repo.CheckExists(existOpts); err != nil {
 		return err
@@ -94,7 +106,10 @@ func (repo *BankRepository) Update(id models.ID, bank *models.Bank) error {
 	bank.ID = id
 
 	// validate
-	var opts = options.ValidateOptions{ID: bank.ID, Code: bank.Ledger.Code, Name: bank.Ledger.Name, Number: *bank.AccountNumber}
+	var opts = options.ValidateOptions{
+		ID: bank.ID, Code: bank.Ledger.Code, Name: bank.Ledger.Name,
+		Number: *bank.AccountNumber, ParentID: orgID,
+	}
 	_, err := repo.Validate(opts)
 	if err != nil {
 		return err
@@ -155,29 +170,45 @@ func (repo *BankRepository) GetCount(opts options.ListOptions) (int64, error) {
 
 // CheckExists method
 func (repo *BankRepository) CheckExists(opts options.ExistOptions) (models.ID, error) {
-	condition := models.Bank{}
+	// condition := models.Bank{Ledger: &models.Ledger{}}
+	var id models.ID
+	var err error
 
 	switch opts.Field {
 	case enums.IDField:
-		condition.ID = opts.ID
+		// condition.ID = opts.ID
+		err = repo.db.Model(&models.Bank{}).
+			Select("id").
+			Where("id = ?", opts.ID).
+			Scan(&id).Error
 	case enums.CodeField:
-		condition.Ledger.Code = opts.Value
+		// condition.Ledger.Code = opts.Value
+		condition := models.Ledger{Code: opts.Value, OrgID: opts.ParentID}
+		err = repo.db.Model(&models.Ledger{}).
+			Select("id").
+			Where(condition).
+			Scan(&id).Error
 	case enums.NameField:
-		condition.Ledger.Name = opts.Value
+		// condition.Ledger.Name = opts.Value
+		condition := models.Ledger{Name: opts.Value, OrgID: opts.ParentID}
+		err = repo.db.Model(&models.Ledger{}).
+			Select("id").
+			Where(condition).
+			Scan(&id).Error
 	case enums.NumberField:
-		condition.AccountNumber = &opts.Value
+		// condition.AccountNumber = &opts.Value
+		condition := models.Bank{AccountNumber: &opts.Value}
+		err = repo.db.Model(&models.Bank{}).
+			Select("id").
+			Where(condition).
+			Scan(&id).Error
 	default:
 		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
 	}
-
-	var id models.ID
-	if err := repo.db.Model(&models.Bank{}).
-		Preload("Ledger").
-		Select("id").
-		Where(&condition).
-		Scan(&id).Error; err != nil {
+	if err != nil {
 		return 0, err
 	}
+
 	return id, nil
 }
 
@@ -196,21 +227,21 @@ func (repo *BankRepository) Validate(opts options.ValidateOptions) (bool, error)
 
 	// Duplicate validations
 	// Bank Code
-	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code}
+	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code, ParentID: opts.ParentID}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("bank code already exists")
 	}
 	// Bank Name
-	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name}
+	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name, ParentID: opts.ParentID}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("bank name already exists")
 	}
 	// Account number
-	exOpt = options.ExistOptions{Field: enums.NumberField, Value: opts.Number}
+	exOpt = options.ExistOptions{Field: enums.NumberField, Value: opts.Number, ParentID: opts.ParentID}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {

@@ -26,9 +26,12 @@ type BankDto struct {
 
 func (b *BankDto) ToBank() *models.Bank {
 	return &models.Bank{
-		ID:            b.ID,
-		LedgerID:      0,
-		Ledger:        &models.Ledger{Code: b.Code, Name: b.Name, Description: b.Description, LedgerType: enums.Bank, Active: b.Active},
+		ID:       b.ID,
+		LedgerID: 0,
+		Ledger: &models.Ledger{
+			Code: b.Code, Name: b.Name, Description: b.Description,
+			LedgerType: enums.Bank, Active: b.Active,
+		},
 		AccountNumber: b.AccountNumber,
 		AccountType:   b.AccountType,
 		IfscCode:      b.IfscCode,

@@ -15,9 +15,9 @@ type Bank struct {
 	MicrCode      *string                `gorm:"size:16" json:"micrCode,omitempty"`
 	BranchCode    *string                `gorm:"size:16" json:"branchCode,omitempty"`
 	BranchName    *string                `gorm:"size:26" json:"branchName"`
-	AddressID     ID                     `json:"addressId"`
+	AddressID     *ID                    `json:"addressId"`
 	Address       *Address               `gorm:"foreignKey:AddressID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"address"`
-	ContactID     ID                     `json:"contactId"`
+	ContactID     *ID                    `json:"contactId"`
 	Contact       *Contact               `gorm:"foreignKey:ContactID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"contact"`
 	IsDefault     *bool                  `json:"isDefault"`
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"fanda-api/dtos"
 	"fanda-api/models"
 	"fanda-api/options"
 	"fanda-api/repositories"
@@ -77,7 +78,7 @@ func (route *BankRoute) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var bank models.Bank
+	var bank dtos.BankDto
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 	if err := decoder.Decode(&bank); err != nil {
@@ -95,10 +96,9 @@ func (route *BankRoute) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *BankRoute) update(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid bank ID")
+	id, orgID := readPathRequest(r)
+	if id <= 0 || orgID <= 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid Id/OrgId")
 		return
 	}
 
@@ -110,7 +110,7 @@ func (route *BankRoute) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.repo.Update(models.ID(id), &bank)
+	err := route.repo.Update(orgID, models.ID(id), &bank)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {

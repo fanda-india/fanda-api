@@ -36,7 +36,6 @@ func (repo *LedgerRepository) List(orgID models.ID, opts options.ListOptions) (*
 		return nil, err
 	}
 	return &options.ListResult{Data: &ledgers, Count: count}, nil
-
 }
 
 // Read method
@@ -60,7 +59,7 @@ func (repo *LedgerRepository) Read(id models.ID) (*models.Ledger, error) {
 // Create method
 func (repo *LedgerRepository) Create(orgID models.ID, ledger *models.Ledger) error {
 	// validate
-	var opts = options.ValidateOptions{ID: ledger.ID, Code: ledger.Code, Name: ledger.Name}
+	var opts = options.ValidateOptions{ID: ledger.ID, Code: ledger.Code, Name: ledger.Name, ParentID: orgID}
 	_, err := repo.Validate(opts)
 	if err != nil {
 		return err
@@ -75,7 +74,7 @@ func (repo *LedgerRepository) Create(orgID models.ID, ledger *models.Ledger) err
 }
 
 // Update method
-func (repo *LedgerRepository) Update(id models.ID, ledger *models.Ledger) error {
+func (repo *LedgerRepository) Update(orgID models.ID, id models.ID, ledger *models.Ledger) error {
 	// check record exists
 	// var exists bool
 	// if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM ledgers WHERE id = ?)", id).Scan(&exists).Error; err != nil {
@@ -90,7 +89,7 @@ func (repo *LedgerRepository) Update(id models.ID, ledger *models.Ledger) error 
 	ledger.ID = id
 
 	// validate
-	var opts = options.ValidateOptions{ID: ledger.ID, Code: ledger.Code, Name: ledger.Name}
+	var opts = options.ValidateOptions{ID: ledger.ID, Code: ledger.Code, Name: ledger.Name, ParentID: orgID}
 	_, err := repo.Validate(opts)
 	if err != nil {
 		return err
@@ -161,8 +160,10 @@ func (repo *LedgerRepository) CheckExists(opts options.ExistOptions) (models.ID,
 		condition.ID = opts.ID
 	case enums.CodeField:
 		condition.Code = opts.Value
+		condition.OrgID = opts.ParentID
 	case enums.NameField:
 		condition.Name = opts.Value
+		condition.OrgID = opts.ParentID
 	default:
 		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
 	}
@@ -189,14 +190,14 @@ func (repo *LedgerRepository) Validate(opts options.ValidateOptions) (bool, erro
 
 	// Duplicate validations
 	// Code
-	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code}
+	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code, ParentID: opts.ParentID}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("ledger code already exists")
 	}
 	// Name
-	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name}
+	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name, ParentID: opts.ParentID}
 	if id, err := repo.CheckExists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {

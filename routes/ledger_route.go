@@ -95,10 +95,9 @@ func (route *LedgerRoute) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *LedgerRoute) update(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid ledger ID")
+	id, orgID := readPathRequest(r)
+	if id <= 0 || orgID <= 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid OrgId/Id")
 		return
 	}
 
@@ -110,7 +109,7 @@ func (route *LedgerRoute) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = route.repo.Update(models.ID(id), &ledger)
+	err := route.repo.Update(orgID, models.ID(id), &ledger)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
