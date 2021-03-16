@@ -53,7 +53,7 @@ func (route *OrganizationRoute) read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	org, err := route.repo.Read(uint(id))
+	org, err := route.repo.Read(models.ID(id))
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {

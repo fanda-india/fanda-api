@@ -47,15 +47,16 @@ func (route *UserRoute) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *UserRoute) read(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
-		return
-	}
+	// vars := mux.Vars(r)
+	// id, err := strconv.ParseUint(vars["id"], 10, 32)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+	// 	return
+	// }
+	id, _ := readPathRequest(r)
 
 	// var apiuser apiUser
-	user, err := route.repo.Read(uint(id))
+	user, err := route.repo.Read(id)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {

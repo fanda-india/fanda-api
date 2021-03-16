@@ -8,36 +8,36 @@ import (
 )
 
 // Paginate scope
-func Paginate(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
+func Paginate(opts options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 
 		switch {
-		case o.Size > 100:
-			o.Size = 100
-		case o.Size <= 0 && o.Page > 0:
-			o.Size = 10
-		case o.Size <= 0:
-			o.Size = 0
+		case opts.Size > 100:
+			opts.Size = 100
+		case opts.Size <= 0 && opts.Page > 0:
+			opts.Size = 10
+		case opts.Size <= 0:
+			opts.Size = 0
 		}
-		if o.Page == 0 {
-			o.Page = 1
+		if opts.Page == 0 {
+			opts.Page = 1
 		}
 
-		offset := (o.Page - 1) * o.Size
+		offset := (opts.Page - 1) * opts.Size
 
 		// skip pagination
-		if offset == 0 && o.Size == 0 {
+		if offset == 0 && opts.Size == 0 {
 			return db
 		}
-		return db.Offset(offset).Limit(o.Size)
+		return db.Offset(offset).Limit(opts.Size)
 	}
 }
 
 // All scope
-func All(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
+func All(opts options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 
-		if !o.All {
+		if !opts.All {
 			return db.Where("active = ?", true)
 		}
 		return db
@@ -45,7 +45,7 @@ func All(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
 }
 
 // OrgID scope
-func OrgID(orgID models.ID) func(db *gorm.DB) *gorm.DB {
+func OrgID(orgID models.OrgID) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Where("org_id = ?", orgID)
 	}

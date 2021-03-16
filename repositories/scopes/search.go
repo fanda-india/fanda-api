@@ -8,28 +8,28 @@ import (
 )
 
 // SearchUser scope
-func SearchUser(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
+func SearchUser(opts options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 
-		if o.Search == "" {
+		if opts.Search == "" {
 			return db
 		}
-		o.Search = "%" + o.Search + "%"
+		opts.Search = "%" + opts.Search + "%"
 		return db.Where("(user_name LIKE @search OR email LIKE @search OR "+
 			"mobile_number LIKE @search OR first_name LIKE @search OR last_name LIKE @search)",
-			sql.Named("search", o.Search))
+			sql.Named("search", opts.Search))
 	}
 }
 
 // SearchDefault scope
-func SearchDefault(o options.ListOptions) func(db *gorm.DB) *gorm.DB {
+func SearchDefault(opts options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 
-		if o.Search == "" {
+		if opts.Search == "" {
 			return db
 		}
-		o.Search = "%" + o.Search + "%"
+		opts.Search = "%" + opts.Search + "%"
 		return db.Where("(code LIKE @search OR name LIKE @search OR description LIKE @search)",
-			sql.Named("search", o.Search))
+			sql.Named("search", opts.Search))
 	}
 }

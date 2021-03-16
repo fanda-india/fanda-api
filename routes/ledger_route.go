@@ -37,13 +37,13 @@ func (route *LedgerRoute) Initialize(router *mux.Router) {
 /****************** ROUTE METHODS ********************/
 
 func (route *LedgerRoute) list(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
+	opts := queryToListOptions(r)
 	_, orgID := readPathRequest(r)
 	if orgID <= 0 {
 		respondWithError(w, http.StatusBadRequest, "Invalid Org. Id")
 		return
 	}
-	if result, err := route.repo.List(orgID, o); err != nil {
+	if result, err := route.repo.List(orgID, opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, result)
@@ -51,12 +51,12 @@ func (route *LedgerRoute) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *LedgerRoute) read(w http.ResponseWriter, r *http.Request) {
-	id, _ := readPathRequest(r)
-	if id <= 0 {
+	id, orgID := readPathRequest(r)
+	if id <= 0 || orgID <= 0 {
 		respondWithError(w, http.StatusBadRequest, "Invalid orgId or Id")
 	}
 
-	ledger, err := route.repo.Read(id)
+	ledger, err := route.repo.Read(id, orgID)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -146,9 +146,9 @@ func (route *LedgerRoute) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *LedgerRoute) count(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
-
-	if c, err := route.repo.GetCount(o); err != nil {
+	opts := queryToListOptions(r)
+	_, orgID := readPathRequest(r)
+	if c, err := route.repo.GetCount(orgID, opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
@@ -156,9 +156,9 @@ func (route *LedgerRoute) count(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *LedgerRoute) exists(w http.ResponseWriter, r *http.Request) {
-	o := queryToExistOptions(r)
+	opts := queryToExistOptions(r)
 
-	if id, err := route.repo.CheckExists(o); err != nil {
+	if id, err := route.repo.CheckExists(opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})

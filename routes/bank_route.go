@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"fanda-api/dtos"
 	"fanda-api/models"
@@ -38,13 +37,13 @@ func (route *BankRoute) Initialize(router *mux.Router) {
 /****************** ROUTE METHODS ********************/
 
 func (route *BankRoute) list(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
+	opts := queryToListOptions(r)
 	_, orgID := readPathRequest(r)
 	if orgID <= 0 {
 		respondWithError(w, http.StatusBadRequest, "Invalid Org. Id")
 		return
 	}
-	if result, err := route.repo.List(orgID, o); err != nil {
+	if result, err := route.repo.List(orgID, opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, result)
@@ -52,12 +51,13 @@ func (route *BankRoute) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *BankRoute) read(w http.ResponseWriter, r *http.Request) {
-	id, _ := readPathRequest(r)
-	if id <= 0 {
-		respondWithError(w, http.StatusBadRequest, "Invalid orgId or Id")
+	id, orgID := readPathRequest(r)
+
+	if id <= 0 || orgID <= 0 {
+		respondWithError(w, http.StatusBadRequest, "Invalid OrgId or Id")
 	}
 
-	bank, err := route.repo.Read(id)
+	bank, err := route.repo.Read(id, orgID)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -125,13 +125,15 @@ func (route *BankRoute) update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *BankRoute) delete(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid bank ID")
-		return
-	}
-	_, err = route.repo.Delete(models.ID(id))
+	// vars := mux.Vars(r)
+	// id, err := strconv.ParseUint(vars["id"], 10, 32)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusBadRequest, "Invalid bank ID")
+	// 	return
+	// }
+	id, orgID := readPathRequest(r)
+
+	_, err := route.repo.Delete(id, orgID)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -147,9 +149,9 @@ func (route *BankRoute) delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *BankRoute) count(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
-
-	if c, err := route.repo.GetCount(o); err != nil {
+	opts := queryToListOptions(r)
+	_, orgID := readPathRequest(r)
+	if c, err := route.repo.GetCount(orgID, opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})

@@ -14,7 +14,7 @@ type Ledger struct {
 	Group        *LedgerGroup  `gorm:"foreignKey:GroupID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"group,omitempty"`
 	LedgerType   byte          `gorm:"default:NULL" json:"ledgerType,omitempty"`
 	IsSystem     *bool         `gorm:"default:false" json:"isSystem,omitempty"`
-	OrgID        ID            `gorm:"index:idx_ledgers_code,unique;index:idx_ledgers_name,unique" json:"orgId,omitempty"`
+	OrgID        OrgID         `gorm:"index:idx_ledgers_code,unique;index:idx_ledgers_name,unique" json:"orgId,omitempty"`
 	Organization *Organization `gorm:"foreignKey:OrgID;constraint:OnUpdate:CASCADE,OnDelete:NO ACTION" json:"-"`
 	CreatedAt    time.Time     `json:"createdAt,omitempty"`
 	UpdatedAt    time.Time     `json:"updatedAt,omitempty"`
