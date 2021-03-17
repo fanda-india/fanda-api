@@ -1,4 +1,4 @@
-INSERT INTO users (user_name, email, mobile_number, first_name, last_name, password, active, created_at, is_password_reset)
+INSERT INTO users (user_name, email, mobile_number, first_name, last_name, password, is_active, created_at, is_password_reset)
 VALUES
 ('admin', 'admin@fanda2.com', '9999999999', 'System', 'Administrator', '123', true, '2020-01-01', false);
 

@@ -109,7 +109,7 @@ func (route *LedgerRoute) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := route.repo.Update(orgID, models.ID(id), &ledger)
+	err := route.repo.Update(id, orgID, &ledger)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -148,7 +148,7 @@ func (route *LedgerRoute) delete(w http.ResponseWriter, r *http.Request) {
 func (route *LedgerRoute) count(w http.ResponseWriter, r *http.Request) {
 	opts := queryToListOptions(r)
 	_, orgID := readPathRequest(r)
-	if c, err := route.repo.GetCount(orgID, opts); err != nil {
+	if c, err := route.repo.Count(orgID, opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
@@ -158,7 +158,7 @@ func (route *LedgerRoute) count(w http.ResponseWriter, r *http.Request) {
 func (route *LedgerRoute) exists(w http.ResponseWriter, r *http.Request) {
 	opts := queryToExistOptions(r)
 
-	if id, err := route.repo.CheckExists(opts); err != nil {
+	if id, err := route.repo.Exists(opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})

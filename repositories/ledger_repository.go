@@ -31,7 +31,7 @@ func (repo *LedgerRepository) List(orgID models.OrgID, opts options.ListOptions)
 		Find(&ledgers).Error; err != nil {
 		return nil, err
 	}
-	count, err := repo.GetCount(orgID, opts)
+	count, err := repo.Count(orgID, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (repo *LedgerRepository) Read(id models.ID, orgID models.OrgID) (*models.Le
 // Create method
 func (repo *LedgerRepository) Create(orgID models.OrgID, ledger *models.Ledger) error {
 	// validate
-	var opts = options.ValidateOptions{ID: ledger.ID, Code: ledger.Code, Name: ledger.Name, OrgID: orgID}
+	var opts = options.ValidateOptions{ID: ledger.ID, Name: ledger.Name, OrgID: orgID}
 	_, err := repo.Validate(opts)
 	if err != nil {
 		return err
@@ -73,14 +73,14 @@ func (repo *LedgerRepository) Create(orgID models.OrgID, ledger *models.Ledger) 
 }
 
 // Update method
-func (repo *LedgerRepository) Update(orgID models.OrgID, id models.ID, ledger *models.Ledger) error {
+func (repo *LedgerRepository) Update(id models.ID, orgID models.OrgID, ledger *models.Ledger) error {
 	// check record exists
 	// var exists bool
 	// if err := repo.db.Raw("SELECT EXISTS(SELECT 1 FROM ledgers WHERE id = ?)", id).Scan(&exists).Error; err != nil {
 	// 	return nil, err
 	// }
 	var existOpts = options.ExistOptions{ID: id, Field: enums.IDField}
-	if existID, err := repo.CheckExists(existOpts); err != nil {
+	if existID, err := repo.Exists(existOpts); err != nil {
 		return err
 	} else if id != existID {
 		return options.NewNotFoundError("Ledger")
@@ -88,7 +88,7 @@ func (repo *LedgerRepository) Update(orgID models.OrgID, id models.ID, ledger *m
 	ledger.ID = id
 
 	// validate
-	var opts = options.ValidateOptions{ID: ledger.ID, Code: ledger.Code, Name: ledger.Name, OrgID: orgID}
+	var opts = options.ValidateOptions{ID: ledger.ID, Name: ledger.Name, OrgID: orgID}
 	_, err := repo.Validate(opts)
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (repo *LedgerRepository) Delete(id models.ID) (bool, error) {
 	// 	return false, err
 	// }
 	var opts = options.ExistOptions{ID: id, Field: enums.IDField}
-	if existID, err := repo.CheckExists(opts); err != nil {
+	if existID, err := repo.Exists(opts); err != nil {
 		return false, err
 	} else if id != existID {
 		return false, options.NewNotFoundError("Ledger")
@@ -139,8 +139,8 @@ func (repo *LedgerRepository) Delete(id models.ID) (bool, error) {
 	return true, nil
 }
 
-// GetCount method
-func (repo *LedgerRepository) GetCount(orgID models.OrgID, opts options.ListOptions) (int64, error) {
+// Count method
+func (repo *LedgerRepository) Count(orgID models.OrgID, opts options.ListOptions) (int64, error) {
 	var count int64
 	if err := repo.db.Model(&models.Ledger{}).
 		Scopes(scopes.All(opts), scopes.SearchDefault(opts), scopes.OrgID(orgID)).
@@ -150,31 +150,29 @@ func (repo *LedgerRepository) GetCount(orgID models.OrgID, opts options.ListOpti
 	return count, nil
 }
 
-// CheckExists method
-func (repo *LedgerRepository) CheckExists(opts options.ExistOptions) (models.ID, error) {
-	condition := models.Ledger{}
+// Exists method
+func (repo *LedgerRepository) Exists(opts options.ExistOptions) (models.ID, error) {
+	if opts.Value == "" && opts.ID == 0 {
+		return 0, errors.New("value is required")
+	}
+
+	var id uint
+	var err error
+	db := repo.db.Model(&models.Ledger{}).Select("id")
 
 	switch opts.Field {
 	case enums.IDField:
-		condition.ID = opts.ID
-	case enums.CodeField:
-		condition.Code = opts.Value
-		condition.OrgID = opts.OrgID
+		err = db.Where("id = ?", opts.ID).Scan(&id).Error
 	case enums.NameField:
-		condition.Name = opts.Value
-		condition.OrgID = opts.OrgID
+		err = db.Where("name = ? and org_id = ?", opts.Value, opts.OrgID).Scan(&id).Error
 	default:
-		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
+		return 0, fmt.Errorf("Exists - Unknown field: %d", opts.Field)
 	}
 
-	var id models.ID
-	if err := repo.db.Model(&models.Ledger{}).
-		Select("id").
-		Where(&condition).
-		Scan(&id).Error; err != nil {
+	if err != nil {
 		return 0, err
 	}
-	return id, nil
+	return models.ID(id), nil
 }
 
 // Validate method
@@ -189,15 +187,15 @@ func (repo *LedgerRepository) Validate(opts options.ValidateOptions) (bool, erro
 
 	// Duplicate validations
 	// Code
-	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code, OrgID: opts.OrgID}
-	if id, err := repo.CheckExists(exOpt); err != nil {
-		return false, err
-	} else if id != 0 && id != opts.ID {
-		return false, errors.New("ledger code already exists")
-	}
+	// exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code, OrgID: opts.OrgID}
+	// if id, err := repo.Exists(exOpt); err != nil {
+	// 	return false, err
+	// } else if id != 0 && id != opts.ID {
+	// 	return false, errors.New("ledger code already exists")
+	// }
 	// Name
-	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name, OrgID: opts.OrgID}
-	if id, err := repo.CheckExists(exOpt); err != nil {
+	exOpt := options.ExistOptions{Field: enums.NameField, Value: opts.Name, OrgID: opts.OrgID}
+	if id, err := repo.Exists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("ledger name already exists")

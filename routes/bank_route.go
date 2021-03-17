@@ -110,7 +110,7 @@ func (route *BankRoute) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := route.repo.Update(orgID, models.ID(id), &bank)
+	err := route.repo.Update(id, orgID, &bank)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -151,7 +151,7 @@ func (route *BankRoute) delete(w http.ResponseWriter, r *http.Request) {
 func (route *BankRoute) count(w http.ResponseWriter, r *http.Request) {
 	opts := queryToListOptions(r)
 	_, orgID := readPathRequest(r)
-	if c, err := route.repo.GetCount(orgID, opts); err != nil {
+	if c, err := route.repo.Count(orgID, opts); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
@@ -161,7 +161,7 @@ func (route *BankRoute) count(w http.ResponseWriter, r *http.Request) {
 func (route *BankRoute) exists(w http.ResponseWriter, r *http.Request) {
 	o := queryToExistOptions(r)
 
-	if id, err := route.repo.CheckExists(o); err != nil {
+	if id, err := route.repo.Exists(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})

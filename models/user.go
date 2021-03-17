@@ -17,5 +17,5 @@ type User struct {
 	LoginAt         *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	Active          *bool `gorm:"default:true"`
+	IsActive        *bool `gorm:"default:true"`
 }

@@ -140,7 +140,7 @@ func (route *OrganizationRoute) delete(w http.ResponseWriter, r *http.Request) {
 func (route *OrganizationRoute) count(w http.ResponseWriter, r *http.Request) {
 	o := queryToListOptions(r)
 
-	if c, err := route.repo.GetCount(o); err != nil {
+	if c, err := route.repo.Count(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
@@ -150,7 +150,7 @@ func (route *OrganizationRoute) count(w http.ResponseWriter, r *http.Request) {
 func (route *OrganizationRoute) exists(w http.ResponseWriter, r *http.Request) {
 	o := queryToExistOptions(r)
 
-	if id, err := route.repo.CheckExists(o); err != nil {
+	if id, err := route.repo.Exists(o); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})

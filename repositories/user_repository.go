@@ -3,12 +3,13 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+
 	"fanda-api/dtos"
 	"fanda-api/enums"
 	"fanda-api/models"
 	"fanda-api/options"
 	"fanda-api/repositories/scopes"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -32,7 +33,7 @@ func (repo *UserRepository) List(opts options.ListOptions) (*options.ListResult,
 		Find(&users).Error; err != nil {
 		return nil, err
 	}
-	count, err := repo.GetCount(opts)
+	count, err := repo.Count(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (repo *UserRepository) Update(id models.ID, userDto *dtos.UserDto) error {
 	// }
 	userDto.ID = id
 	var existOpts = options.ExistOptions{ID: id, Field: enums.IDField}
-	if existID, err := repo.CheckExists(existOpts); err != nil {
+	if existID, err := repo.Exists(existOpts); err != nil {
 		return err
 	} else if id != existID {
 		return options.NewNotFoundError("User")
@@ -118,7 +119,7 @@ func (repo *UserRepository) Delete(id models.ID) (bool, error) {
 	// 	return false, err
 	// }
 	var opts = options.ExistOptions{ID: id, Field: enums.IDField}
-	if existID, err := repo.CheckExists(opts); err != nil {
+	if existID, err := repo.Exists(opts); err != nil {
 		return false, err
 	} else if id != existID {
 		return false, options.NewNotFoundError("User")
@@ -130,8 +131,8 @@ func (repo *UserRepository) Delete(id models.ID) (bool, error) {
 	return true, nil
 }
 
-// GetCount method
-func (repo *UserRepository) GetCount(opts options.ListOptions) (int64, error) {
+// Count method
+func (repo *UserRepository) Count(opts options.ListOptions) (int64, error) {
 	var count int64
 	if err := repo.db.Model(&models.User{}).
 		Scopes(scopes.All(opts), scopes.SearchUser(opts)).
@@ -141,35 +142,33 @@ func (repo *UserRepository) GetCount(opts options.ListOptions) (int64, error) {
 	return count, nil
 }
 
-// CheckExists method
-func (repo *UserRepository) CheckExists(opts options.ExistOptions) (models.ID, error) {
+// Exists method
+func (repo *UserRepository) Exists(opts options.ExistOptions) (models.ID, error) {
 	if opts.Value == "" && opts.ID == 0 {
 		return 0, errors.New("value is required")
 	}
 
-	condition := models.User{}
+	var id uint
+	var err error
+	db := repo.db.Model(&models.User{}).Select("id")
 
 	switch opts.Field {
 	case enums.IDField:
-		condition.ID = opts.ID
+		err = db.Where("id = ?", opts.ID).Scan(&id).Error
 	case enums.NameField:
-		condition.UserName = opts.Value
+		err = db.Where("user_name = ?", opts.Value).Scan(&id).Error
 	case enums.EmailField:
-		condition.Email = opts.Value
+		err = db.Where("email = ?", opts.Value).Scan(&id).Error
 	case enums.MobileField:
-		condition.MobileNumber = opts.Value
+		err = db.Where("mobile_number = ?", opts.Value).Scan(&id).Error
 	default:
-		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
+		return 0, fmt.Errorf("Exists - Unknown field: %d", opts.Field)
 	}
 
-	var id models.ID
-	if err := repo.db.Model(&models.User{}).
-		Select("id").
-		Where(&condition).
-		Scan(&id).Error; err != nil {
+	if err != nil {
 		return 0, err
 	}
-	return id, nil
+	return models.ID(id), nil
 }
 
 // Validate method
@@ -188,21 +187,21 @@ func (repo *UserRepository) Validate(opts options.ValidateOptions) (bool, error)
 	// Duplicate validations
 	// Username
 	exOpt := options.ExistOptions{Field: enums.NameField, Value: opts.Name}
-	if id, err := repo.CheckExists(exOpt); err != nil {
+	if id, err := repo.Exists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("username already exists")
 	}
 	// Email
 	exOpt = options.ExistOptions{Field: enums.EmailField, Value: opts.Email}
-	if id, err := repo.CheckExists(exOpt); err != nil {
+	if id, err := repo.Exists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("email already exists")
 	}
 	// Mobile number
 	exOpt = options.ExistOptions{Field: enums.MobileField, Value: opts.Mobile}
-	if id, err := repo.CheckExists(exOpt); err != nil {
+	if id, err := repo.Exists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("mobile number already exists")

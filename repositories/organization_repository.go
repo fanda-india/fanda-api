@@ -32,7 +32,7 @@ func (repo *OrganizationRepository) List(opts options.ListOptions) (*options.Lis
 		Find(&orgs).Error; err != nil {
 		return nil, err
 	}
-	count, err := repo.GetCount(opts)
+	count, err := repo.Count(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (repo *OrganizationRepository) Update(id models.ID, org *models.Organizatio
 	// 	return nil, err
 	// }
 	var existOpts = options.ExistOptions{ID: id, Field: enums.IDField}
-	if existID, err := repo.CheckExists(existOpts); err != nil {
+	if existID, err := repo.Exists(existOpts); err != nil {
 		return err
 	} else if id != existID {
 		return options.NewNotFoundError("Organization")
@@ -117,7 +117,7 @@ func (repo *OrganizationRepository) Delete(id models.ID) (bool, error) {
 	// 	return false, err
 	// }
 	var opts = options.ExistOptions{ID: id, Field: enums.IDField}
-	if existID, err := repo.CheckExists(opts); err != nil {
+	if existID, err := repo.Exists(opts); err != nil {
 		return false, err
 	} else if id != existID {
 		return false, options.NewNotFoundError("Organization")
@@ -139,8 +139,8 @@ func (repo *OrganizationRepository) Delete(id models.ID) (bool, error) {
 	return true, nil
 }
 
-// GetCount method
-func (repo *OrganizationRepository) GetCount(opts options.ListOptions) (int64, error) {
+// Count method
+func (repo *OrganizationRepository) Count(opts options.ListOptions) (int64, error) {
 	var count int64
 	if err := repo.db.Model(&models.Organization{}).
 		Scopes(scopes.All(opts), scopes.SearchDefault(opts)).
@@ -150,29 +150,34 @@ func (repo *OrganizationRepository) GetCount(opts options.ListOptions) (int64, e
 	return count, nil
 }
 
-// CheckExists method
-func (repo *OrganizationRepository) CheckExists(opts options.ExistOptions) (models.ID, error) {
-	condition := models.Organization{}
+// Exists method
+func (repo *OrganizationRepository) Exists(opts options.ExistOptions) (models.ID, error) {
+	if opts.Value == "" && opts.ID == 0 {
+		return 0, errors.New("value is required")
+	}
+
+	var id uint
+	var err error
+	db := repo.db.Model(&models.Organization{}).Select("id")
 
 	switch opts.Field {
 	case enums.IDField:
-		condition.ID = opts.ID
+		// condition.ID = opts.ID
+		err = db.Where("id = ?", opts.ID).Scan(&id).Error
 	case enums.CodeField:
-		condition.Code = opts.Value
+		// condition.Code = opts.Value
+		err = db.Where("code = ?", opts.Value).Scan(&id).Error
 	case enums.NameField:
-		condition.Name = opts.Value
+		// condition.Name = opts.Value
+		err = db.Where("name = ?", opts.Value).Scan(&id).Error
 	default:
-		return 0, fmt.Errorf("CheckExists - Unknown field: %d", opts.Field)
+		return 0, fmt.Errorf("Exists - Unknown field: %d", opts.Field)
 	}
 
-	var id models.ID
-	if err := repo.db.Model(&models.Organization{}).
-		Select("id").
-		Where(&condition).
-		Scan(&id).Error; err != nil {
+	if err != nil {
 		return 0, err
 	}
-	return id, nil
+	return models.ID(id), nil
 }
 
 // Validate method
@@ -188,14 +193,14 @@ func (repo *OrganizationRepository) Validate(opts options.ValidateOptions) (bool
 	// Duplicate validations
 	// Code
 	exOpt := options.ExistOptions{Field: enums.CodeField, Value: opts.Code}
-	if id, err := repo.CheckExists(exOpt); err != nil {
+	if id, err := repo.Exists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("org. code already exists")
 	}
 	// Name
 	exOpt = options.ExistOptions{Field: enums.NameField, Value: opts.Name}
-	if id, err := repo.CheckExists(exOpt); err != nil {
+	if id, err := repo.Exists(exOpt); err != nil {
 		return false, err
 	} else if id != 0 && id != opts.ID {
 		return false, errors.New("org. name already exists")

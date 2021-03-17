@@ -9,7 +9,7 @@ import (
 type BankDto struct {
 	ID models.ID `json:"id"`
 	// LedgerID      models.ID              `json:"ledgerId"`
-	Code          string                 `json:"code,omitempty"`
+	// Code          string                 `json:"code,omitempty"`
 	Name          string                 `json:"name,omitempty"`
 	Description   *string                `json:"description,omitempty"`
 	AccountNumber *string                `json:"accountNumber,omitempty"`
@@ -21,7 +21,7 @@ type BankDto struct {
 	Address       *models.Address        `json:"address,omitempty"`
 	Contact       *models.Contact        `json:"contact,omitempty"`
 	IsDefault     *bool                  `json:"isDefault,omitempty"`
-	Active        *bool                  `json:"active,omitempty"`
+	IsActive      *bool                  `json:"isActive,omitempty"`
 }
 
 func (b *BankDto) ToBank() *models.Bank {
@@ -29,8 +29,8 @@ func (b *BankDto) ToBank() *models.Bank {
 		ID:       b.ID,
 		LedgerID: 0,
 		Ledger: &models.Ledger{
-			Code: b.Code, Name: b.Name, Description: b.Description,
-			LedgerType: enums.Bank, Active: b.Active,
+			Name: b.Name, Description: b.Description,
+			LedgerType: enums.Bank, IsActive: b.IsActive,
 		},
 		AccountNumber: b.AccountNumber,
 		AccountType:   b.AccountType,
@@ -46,10 +46,10 @@ func (b *BankDto) ToBank() *models.Bank {
 
 func (b *BankDto) FromBank(bank models.Bank) *BankDto {
 	b.ID = bank.ID
-	b.Code = bank.Ledger.Code
+	// b.Code = bank.Ledger.Code
 	b.Name = bank.Ledger.Name
 	b.Description = bank.Ledger.Description
-	b.Active = bank.Ledger.Active
+	b.IsActive = bank.Ledger.IsActive
 	b.AccountNumber = bank.AccountNumber
 	b.AccountType = bank.AccountType
 	b.IfscCode = bank.IfscCode

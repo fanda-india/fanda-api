@@ -38,7 +38,7 @@ func All(opts options.ListOptions) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 
 		if !opts.All {
-			return db.Where("active = ?", true)
+			return db.Where("is_active = ?", true)
 		}
 		return db
 	}

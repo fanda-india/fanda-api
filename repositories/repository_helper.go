@@ -7,13 +7,14 @@ import (
 )
 
 func getLedgerGroupID(tx *gorm.DB, groupCode string) (*models.ID, error) {
-	var groupID models.ID
+	var id uint
 
 	if err := tx.Model(&models.LedgerGroup{}).
 		Select("id").
 		Where("code = ?", groupCode).
-		Scan(&groupID).Error; err != nil {
+		Scan(&id).Error; err != nil {
 		return nil, err
 	}
+	groupID := models.ID(id)
 	return &groupID, nil
 }

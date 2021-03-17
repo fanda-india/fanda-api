@@ -11,7 +11,7 @@ type UserDto struct {
 	Password     string    `json:"password,omitempty"`
 	FirstName    *string   `json:"firstName,omitempty"`
 	LastName     *string   `json:"lastName,omitempty"`
-	Active       *bool     `json:"active,omitempty"`
+	IsActive     *bool     `json:"isActive,omitempty"`
 }
 
 // ToUser method
@@ -19,7 +19,7 @@ func (u *UserDto) ToUser() *models.User {
 	return &models.User{ID: u.ID, UserName: u.UserName,
 		Email: u.Email, MobileNumber: u.MobileNumber,
 		Password: u.Password, FirstName: u.FirstName,
-		LastName: u.LastName, Active: u.Active,
+		LastName: u.LastName, IsActive: u.IsActive,
 	}
 }
 
@@ -32,6 +32,6 @@ func (u *UserDto) FromUser(user *models.User) *UserDto {
 	u.Password = user.Password
 	u.FirstName = user.FirstName
 	u.LastName = user.LastName
-	u.Active = user.Active
+	u.IsActive = user.IsActive
 	return u
 }
