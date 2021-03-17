@@ -37,7 +37,6 @@ func (repo *UserRepository) List(opts options.ListOptions) (*options.ListResult,
 		return nil, err
 	}
 	return &options.ListResult{Data: &users, Count: count}, nil
-
 }
 
 // Read method
