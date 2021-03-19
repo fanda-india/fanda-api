@@ -41,7 +41,7 @@ func (repo *UserRepository) List(opts options.ListOptions) (*options.ListResult,
 }
 
 // Read method
-func (repo *UserRepository) Read(id models.ID) (*dtos.UserDto, error) {
+func (repo *UserRepository) Read(id models.ID) (*options.Result, error) {
 	var user dtos.UserDto
 
 	if err := repo.db.Model(&models.User{}).First(&user, id).Error; err != nil {
@@ -53,7 +53,7 @@ func (repo *UserRepository) Read(id models.ID) (*dtos.UserDto, error) {
 			return nil, err
 		}
 	}
-	return &user, nil
+	return &options.Result{Data: &user}, nil
 }
 
 // Create method
@@ -154,7 +154,11 @@ func (repo *UserRepository) Exists(opts options.ExistOptions) (models.ID, error)
 
 	switch opts.Field {
 	case enums.IDField:
-		err = db.Where("id = ?", opts.ID).Scan(&id).Error
+		if opts.ID == 0 {
+			err = db.Where("id = ?", opts.Value).Scan(&id).Error
+		} else {
+			err = db.Where("id = ?", opts.ID).Scan(&id).Error
+		}
 	case enums.NameField:
 		err = db.Where("user_name = ?", opts.Value).Scan(&id).Error
 	case enums.EmailField:
@@ -174,14 +178,20 @@ func (repo *UserRepository) Exists(opts options.ExistOptions) (models.ID, error)
 // Validate method
 func (repo *UserRepository) Validate(opts options.ValidateOptions) (bool, error) {
 	// Required validations
-	if opts.Name == "" {
+	if opts.ID == 0 && opts.Name == "" {
 		return false, errors.New("username is required")
+	} else if opts.ID > 0 && opts.Name == "" {
+		return true, nil
 	}
-	if opts.Email == "" {
+	if opts.ID == 0 && opts.Email == "" {
 		return false, errors.New("email is required")
+	} else if opts.ID > 0 && opts.Email == "" {
+		return true, nil
 	}
-	if opts.Mobile == "" {
+	if opts.ID == 0 && opts.Mobile == "" {
 		return false, errors.New("mobile number is required")
+	} else if opts.ID > 0 && opts.Mobile == "" {
+		return true, nil
 	}
 
 	// Duplicate validations

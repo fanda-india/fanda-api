@@ -56,7 +56,7 @@ func (route *UserRoute) read(w http.ResponseWriter, r *http.Request) {
 	id, _ := readPathRequest(r)
 
 	// var apiuser apiUser
-	user, err := route.repo.Read(id)
+	result, err := route.repo.Read(id)
 	if err != nil {
 		_, ok := err.(*options.NotFoundError)
 		switch {
@@ -67,7 +67,7 @@ func (route *UserRoute) read(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	respondWithJSON(w, http.StatusOK, user)
+	respondWithJSON(w, http.StatusOK, result.Data)
 }
 
 func (route *UserRoute) create(w http.ResponseWriter, r *http.Request) {
@@ -151,15 +151,20 @@ func (route *UserRoute) count(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *UserRoute) exists(w http.ResponseWriter, r *http.Request) {
-	o := queryToExistOptions(r)
-	if o.Value == "" {
-		respondWithError(w, http.StatusBadRequest, "Value is required")
-		return
-	}
+	existsFunc(w, r, route.repo.Exists)
+	// o := queryToExistOptions(r)
+	// if o.Value == "" {
+	// 	respondWithError(w, http.StatusBadRequest, "Value is required")
+	// 	return
+	// }
+	// if o.Field == enums.IDField {
+	// 	id, _ := strconv.ParseUint(o.Value, 10, 32)
+	// 	o.ID = models.ID(id)
+	// }
 
-	if id, err := route.repo.Exists(o); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})
-	}
+	// if id, err := route.repo.Exists(o); err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
+	// } else {
+	// 	respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})
+	// }
 }

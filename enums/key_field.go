@@ -20,7 +20,7 @@ const (
 	NumberField
 )
 
-var keyFields = []string{"", "Code", "Name", "Email", "Mobile", "Number"}
+var keyFields = []string{"ID", "Code", "Name", "Email", "Mobile", "Number"}
 
 // String method
 func (k KeyField) String() string {
