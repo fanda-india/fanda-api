@@ -119,39 +119,42 @@ func (route *UserRoute) update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *UserRoute) delete(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
-		return
-	}
-	_, err = route.repo.Delete(models.ID(id))
-	if err != nil {
-		_, ok := err.(*options.NotFoundError)
-		switch {
-		case ok:
-			respondWithError(w, http.StatusNotFound, err.Error())
-		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
-		}
-		return
-	}
+	deleteFunc(w, r, route.repo.Delete)
 
-	respondWithJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+	// vars := mux.Vars(r)
+	// id, err := strconv.ParseUint(vars["id"], 10, 32)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+	// 	return
+	// }
+	// _, err = route.repo.Delete(models.ID(id))
+	// if err != nil {
+	// 	_, ok := err.(*options.NotFoundError)
+	// 	switch {
+	// 	case ok:
+	// 		respondWithError(w, http.StatusNotFound, err.Error())
+	// 	default:
+	// 		respondWithError(w, http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return
+	// }
+	// respondWithJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 }
 
 func (route *UserRoute) count(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
+	countFunc(w, r, route.repo.Count)
 
-	if c, err := route.repo.Count(o); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
-	}
+	// o := queryToListOptions(r)
+	// if c, err := route.repo.Count(o); err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
+	// } else {
+	// 	respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
+	// }
 }
 
 func (route *UserRoute) exists(w http.ResponseWriter, r *http.Request) {
 	existsFunc(w, r, route.repo.Exists)
+
 	// o := queryToExistOptions(r)
 	// if o.Value == "" {
 	// 	respondWithError(w, http.StatusBadRequest, "Value is required")
@@ -161,7 +164,6 @@ func (route *UserRoute) exists(w http.ResponseWriter, r *http.Request) {
 	// 	id, _ := strconv.ParseUint(o.Value, 10, 32)
 	// 	o.ID = models.ID(id)
 	// }
-
 	// if id, err := route.repo.Exists(o); err != nil {
 	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
 	// } else {
