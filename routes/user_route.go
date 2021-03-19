@@ -38,36 +38,32 @@ func (route *UserRoute) Initialize(router *mux.Router) {
 /****************** ROUTE METHODS ********************/
 
 func (route *UserRoute) list(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
-	if result, err := route.repo.List(o); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		respondWithJSON(w, http.StatusOK, result)
-	}
+	listFunc(w, r, route.repo.List)
+
+	// o := queryToListOptions(r)
+	// if result, err := route.repo.List(o); err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
+	// } else {
+	// 	respondWithJSON(w, http.StatusOK, result)
+	// }
 }
 
 func (route *UserRoute) read(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
-	// id, err := strconv.ParseUint(vars["id"], 10, 32)
+	readFunc(w, r, route.repo.Read)
+
+	// id, _ := readPathRequest(r)
+	// result, err := route.repo.Read(id)
 	// if err != nil {
-	// 	respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+	// 	_, ok := err.(*options.NotFoundError)
+	// 	switch {
+	// 	case ok:
+	// 		respondWithError(w, http.StatusNotFound, err.Error())
+	// 	default:
+	// 		respondWithError(w, http.StatusInternalServerError, err.Error())
+	// 	}
 	// 	return
 	// }
-	id, _ := readPathRequest(r)
-
-	// var apiuser apiUser
-	result, err := route.repo.Read(id)
-	if err != nil {
-		_, ok := err.(*options.NotFoundError)
-		switch {
-		case ok:
-			respondWithError(w, http.StatusNotFound, err.Error())
-		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
-		}
-		return
-	}
-	respondWithJSON(w, http.StatusOK, result.Data)
+	// respondWithJSON(w, http.StatusOK, result.Data)
 }
 
 func (route *UserRoute) create(w http.ResponseWriter, r *http.Request) {
