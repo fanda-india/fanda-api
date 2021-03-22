@@ -41,7 +41,7 @@ func (repo *OrganizationRepository) List(opts options.ListOptions) (*options.Lis
 }
 
 // Read method
-func (repo *OrganizationRepository) Read(id models.ID) (*models.Organization, error) {
+func (repo *OrganizationRepository) Read(id models.ID) (*options.Result, error) {
 	var org models.Organization
 
 	if err := repo.db.
@@ -55,7 +55,7 @@ func (repo *OrganizationRepository) Read(id models.ID) (*models.Organization, er
 			return nil, err
 		}
 	}
-	return &org, nil
+	return &options.Result{Data: &org}, nil
 }
 
 // Create method
@@ -123,13 +123,16 @@ func (repo *OrganizationRepository) Delete(id models.ID) (bool, error) {
 		return false, options.NewNotFoundError("Organization")
 	}
 
-	org, err := repo.Read(id)
+	result, err := repo.Read(id)
 	if err != nil {
 		return false, err
 	}
+	org := result.Data.(models.Organization)
+
 	if err := repo.db.Select(clause.Associations).Delete(&org).Error; err != nil {
 		return false, err
 	}
+
 	if err := repo.db.Delete(&org.Address).Error; err != nil {
 		return false, err
 	}

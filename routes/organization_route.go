@@ -37,34 +37,37 @@ func (route *OrganizationRoute) Initialize(router *mux.Router) {
 /****************** ROUTE METHODS ********************/
 
 func (route *OrganizationRoute) list(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
-	if result, err := route.repo.List(o); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		respondWithJSON(w, http.StatusOK, result)
-	}
+	listFunc(w, r, route.repo.List)
+
+	// o := queryToListOptions(r)
+	// if result, err := route.repo.List(o); err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
+	// } else {
+	// 	respondWithJSON(w, http.StatusOK, result)
+	// }
 }
 
 func (route *OrganizationRoute) read(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid organization ID")
-		return
-	}
+	readFunc(w, r, route.repo.Read)
 
-	org, err := route.repo.Read(models.ID(id))
-	if err != nil {
-		_, ok := err.(*options.NotFoundError)
-		switch {
-		case ok:
-			respondWithError(w, http.StatusNotFound, err.Error())
-		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
-		}
-		return
-	}
-	respondWithJSON(w, http.StatusOK, org)
+	// vars := mux.Vars(r)
+	// id, err := strconv.ParseUint(vars["id"], 10, 32)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusBadRequest, "Invalid organization ID")
+	// 	return
+	// }
+	// org, err := route.repo.Read(models.ID(id))
+	// if err != nil {
+	// 	_, ok := err.(*options.NotFoundError)
+	// 	switch {
+	// 	case ok:
+	// 		respondWithError(w, http.StatusNotFound, err.Error())
+	// 	default:
+	// 		respondWithError(w, http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return
+	// }
+	// respondWithJSON(w, http.StatusOK, org)
 }
 
 func (route *OrganizationRoute) create(w http.ResponseWriter, r *http.Request) {
@@ -116,43 +119,46 @@ func (route *OrganizationRoute) update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (route *OrganizationRoute) delete(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid organization ID")
-		return
-	}
-	_, err = route.repo.Delete(models.ID(id))
-	if err != nil {
-		_, ok := err.(*options.NotFoundError)
-		switch {
-		case ok:
-			respondWithError(w, http.StatusNotFound, err.Error())
-		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
-		}
-		return
-	}
+	deleteFunc(w, r, route.repo.Delete)
 
-	respondWithJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+	// vars := mux.Vars(r)
+	// id, err := strconv.ParseUint(vars["id"], 10, 32)
+	// if err != nil {
+	// 	respondWithError(w, http.StatusBadRequest, "Invalid organization ID")
+	// 	return
+	// }
+	// _, err = route.repo.Delete(models.ID(id))
+	// if err != nil {
+	// 	_, ok := err.(*options.NotFoundError)
+	// 	switch {
+	// 	case ok:
+	// 		respondWithError(w, http.StatusNotFound, err.Error())
+	// 	default:
+	// 		respondWithError(w, http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return
+	// }
+	// respondWithJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 }
 
 func (route *OrganizationRoute) count(w http.ResponseWriter, r *http.Request) {
-	o := queryToListOptions(r)
+	countFunc(w, r, route.repo.Count)
 
-	if c, err := route.repo.Count(o); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
-	}
+	// o := queryToListOptions(r)
+	// if c, err := route.repo.Count(o); err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
+	// } else {
+	// 	respondWithJSON(w, http.StatusOK, map[string]int64{"count": c})
+	// }
 }
 
 func (route *OrganizationRoute) exists(w http.ResponseWriter, r *http.Request) {
-	o := queryToExistOptions(r)
+	existsFunc(w, r, route.repo.Exists)
 
-	if id, err := route.repo.Exists(o); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	} else {
-		respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})
-	}
+	// o := queryToExistOptions(r)
+	// if id, err := route.repo.Exists(o); err != nil {
+	// 	respondWithError(w, http.StatusInternalServerError, err.Error())
+	// } else {
+	// 	respondWithJSON(w, http.StatusOK, map[string]models.ID{"id": id})
+	// }
 }
